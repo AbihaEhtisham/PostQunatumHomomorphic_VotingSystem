@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Login — PQC Voting</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <main class="container">
+    <h1>Login</h1>
+    <p class="subtitle">Enter CNIC and password to continue</p>
+    <p>Don't have an account? <a href="{{ url_for('signup') }}">Sign up here</a></p>
+
+    <form id="loginForm" class="card" autocomplete="off">
+      <label for="cnic">CNIC (13 digits)</label>
+      <input id="cnic" name="cnic" type="text" inputmode="numeric" maxlength="13" placeholder="1234512345671" required>
+
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" placeholder="Your password" required>
+
+      <button type="submit" class="btn">Next — Face Verification</button>
+      <p id="loginMsg" class="helper"></p>
+    </form>
+  </main>
+
+  <script src="{{ url_for('static', filename='js/login.js') }}"></script>
+</body>
+</html>

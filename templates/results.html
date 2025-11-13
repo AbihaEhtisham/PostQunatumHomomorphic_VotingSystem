@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Results — PQC Voting</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <main class="container">
+    <h1>Election Results</h1>
+    <p class="subtitle">Final tally (admin view)</p>
+
+    <div class="card">
+      <div id="resultsBlock">Loading results...</div>
+      <button id="refreshBtn" class="btn">Refresh</button>
+    </div>
+  </main>
+
+<script>
+async function loadResults(){
+  try {
+    const res = await fetch('/api/results');
+    const data = await res.json();
+    const div = document.getElementById('resultsBlock');
+    if (res.ok) {
+      div.innerHTML = '<pre>' + JSON.stringify(data.tally, null, 2) + '</pre>';
+    } else {
+      div.textContent = data.message || 'Could not load results';
+    }
+  } catch (e) {
+    document.getElementById('resultsBlock').textContent = 'Network error';
+  }
+}
+document.getElementById('refreshBtn').addEventListener('click', loadResults);
+window.addEventListener('DOMContentLoaded', loadResults);
+</script>
+</body>
+</html>

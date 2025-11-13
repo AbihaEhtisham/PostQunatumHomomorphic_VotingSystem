@@ -1,0 +1,54 @@
+<!-- templates/signup.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Voter Signup — PQC Voting</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    .requirement { display: flex; align-items: center; margin: 5px 0; }
+    .requirement span { margin-left: 5px; }
+    .valid { color: green; }
+    .invalid { color: red; }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <h1>Voter Signup</h1>
+    <form id="signupForm">
+      <div class="field">
+        <label>Full Name</label>
+        <input type="text" id="name" name="name" required>
+      </div>
+      <div class="field">
+        <label>CNIC (13 digits)</label>
+        <input type="text" id="cnic" name="cnic" required>
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="email" name="email" required>
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="password" name="password" required>
+        <div id="password-requirements">
+          <div class="requirement" id="req-length">❌ <span>At least 10 characters</span></div>
+          <div class="requirement" id="req-uppercase">❌ <span>1 uppercase letter</span></div>
+          <div class="requirement" id="req-special">❌ <span>1 special character</span></div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Confirm Password</label>
+        <input type="password" id="confirmPassword" name="confirmPassword" required>
+      </div>
+      <div class="actions">
+        <button type="submit" class="btn">Register</button>
+      </div>
+      <p id="signupMsg" class="helper"></p>
+    </form>
+  </main>
+
+  <script src="{{ url_for('static', filename='js/signup.js') }}"></script>
+</body>
+</html>
