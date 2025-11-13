@@ -9,19 +9,32 @@
 <body>
   <main class="container">
     <h1>Login</h1>
-    <p class="subtitle">Enter CNIC and password to continue</p>
-    <p>Don't have an account? <a href="{{ url_for('signup') }}">Sign up here</a></p>
+    <p class="subtitle">Enter Name, CNIC and password to continue</p>
 
     <form id="loginForm" class="card" autocomplete="off">
-      <label for="cnic">CNIC (13 digits)</label>
-      <input id="cnic" name="cnic" type="text" inputmode="numeric" maxlength="13" placeholder="1234512345671" required>
+      <div class="field">
+        <label for="name">Full Name</label>
+        <input id="name" name="name" type="text" placeholder="Your full name" required>
+      </div>
 
-      <label for="password">Password</label>
-      <input id="password" name="password" type="password" placeholder="Your password" required>
+      <div class="field">
+        <label for="cnic">CNIC (13 digits)</label>
+        <input id="cnic" name="cnic" type="text" inputmode="numeric" maxlength="13" placeholder="1234512345671" required>
+      </div>
 
-      <button type="submit" class="btn">Next — Face Verification</button>
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" placeholder="Your password" required>
+      </div>
+
+      <div class="actions">
+        <button type="submit" class="btn">Login</button>
+      </div>
+
       <p id="loginMsg" class="helper"></p>
     </form>
+
+    <p style="margin-top:10px;">Don't have an account? <a href="{{ url_for('signup') }}">Sign up here</a></p>
   </main>
 
   <script src="{{ url_for('static', filename='js/login.js') }}"></script>

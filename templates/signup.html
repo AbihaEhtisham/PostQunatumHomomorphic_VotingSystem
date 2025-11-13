@@ -1,4 +1,4 @@
-<!-- templates/signup.html -->
+<!-- templates/signup.html --> 
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,6 +11,23 @@
     .requirement span { margin-left: 5px; }
     .valid { color: green; }
     .invalid { color: red; }
+
+    /* Ensure all inputs have same width */
+    .field input {
+      width: 100%;
+      padding: 8px;
+      box-sizing: border-box;
+    }
+
+    /* Already registered link styling */
+    #loginLink {
+      display: block;
+      margin-top: 15px;
+      text-align: center;
+      color: #007bff;
+      cursor: pointer;
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
@@ -46,6 +63,7 @@
         <button type="submit" class="btn">Register</button>
       </div>
       <p id="signupMsg" class="helper"></p>
+      <span id="loginLink">Already registered? Login</span>
     </form>
   </main>
 

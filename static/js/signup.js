@@ -31,12 +31,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // confirm password match
     if (data.password !== data.confirmPassword) {
+      msg.style.color = 'red';
       msg.textContent = 'Passwords do not match';
       return;
     }
 
     // check password requirements
     if (data.password.length < 10 || !/[A-Z]/.test(data.password) || !/[!@#$%^&*(),.?":{}|<>]/.test(data.password)) {
+      msg.style.color = 'red';
       msg.textContent = 'Password does not meet requirements';
       return;
     }
@@ -59,7 +61,16 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     } catch (err) {
       console.error(err);
+      msg.style.color = 'red';
       msg.textContent = 'Network error';
     }
   });
+
+  // redirect to login page when "Already registered?" is clicked
+  const loginLink = document.getElementById('loginLink');
+  if (loginLink) {
+    loginLink.addEventListener('click', () => {
+      window.location.href = '/login';
+    });
+  }
 });

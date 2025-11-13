@@ -246,5 +246,51 @@ def signup():
     conn.close()
     return jsonify({'message':'Signup successful! You can now log in.'})
 
+@app.route('/signup', methods=['GET','POST'])
+def signup():
+    if request.method == 'GET':
+        return render_template('signup.html')
+
+    # POST logic
+    data = request.get_json()
+    if not data:
+        return jsonify({'message':'No data received'}), 400
+
+    name = data.get('name','').strip()
+    cnic = data.get('cnic','').strip()
+    email = data.get('email','').strip()
+    password = data.get('password','')
+
+    if not (name and cnic and email and password):
+        return jsonify({'message':'All fields are required'}), 400
+
+    if not cnic.isdigit() or len(cnic) != 13:
+        return jsonify({'message':'CNIC must be 13 digits'}), 400
+
+    import re
+    if not re.match(r'^[^@]+@[^@]+\.[^@]+$', email):
+        return jsonify({'message':'Invalid email'}), 400
+
+    if len(password) < 10 or not re.search(r'[A-Z]', password) or not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
+        return jsonify({'message':'Password does not meet requirements'}), 400
+
+    # check CNIC + Name in DB (voters table) — only unregistered users
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute('SELECT id FROM voters WHERE cnic=? AND name=? AND password_hash IS NULL', (cnic, name))
+    row = c.fetchone()
+    if not row:
+        conn.close()
+        return jsonify({'message':'CNIC or Name not valid or already registered'}), 400
+
+    # update the record with email and hashed password
+    c.execute('UPDATE voters SET password_hash=?, email=? WHERE cnic=?',
+              (generate_password_hash(password), email, cnic))
+    conn.commit()
+    conn.close()
+
+    return jsonify({'message':'Signup successful! You can now log in.'}), 200
+
+
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
