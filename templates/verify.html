@@ -1,0 +1,28 @@
+<!doctype html>
+<html>
+<head><title>Verify Vote</title></head>
+<body>
+<h2>Verify Your Vote</h2>
+<form method="post">
+<input name="receipt" placeholder="Enter vote code">
+<button>Verify</button>
+</form>
+
+<h3>All Votes:</h3>
+<ul>
+{% for h in all_hashes %}
+    {% if h == searched_hash and found %}
+        <li style="color: green; font-weight:bold;">{{ h }} (Found!)</li>
+    {% else %}
+        <li>{{ h }}</li>
+    {% endif %}
+{% endfor %}
+</ul>
+
+{% if searched_hash and not found %}
+<p style="color: red;">Vote not found!</p>
+{% endif %}
+
+</body>
+</html>
+

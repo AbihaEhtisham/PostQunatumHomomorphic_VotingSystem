@@ -10,35 +10,33 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    msg.textContent = '';
+  e.preventDefault();
+  msg.textContent = '';
 
-    const candidate = form.elements['candidate'].value;
-    const comment = document.getElementById('comment').value;
+  const candidate = form.elements['candidate'].value;
+  const comment = document.getElementById('comment').value;
 
-    // PROTOTYPE: simple JSON POST (server will accept this for now)
-    // LATER: replace this with Kyber encapsulate + AES encrypt + Dilithium sign,
-    // and send { kem_ciphertext, enc_payload, signature } as base64 fields.
-    const payload = { candidate, comment };
+  const formData = new FormData();
+  formData.append('candidate', candidate);
+  formData.append('comment', comment);
 
-    try {
-      const res = await fetch('/vote', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify(payload)
-      });
+  try {
+    const res = await fetch('/submit_vote', {
+      method: 'POST',
+      body: formData
+    });
 
-      const data = await res.json();
-      if (res.ok) {
-        msg.textContent = 'Vote submitted. Thank you!';
-        // disable submission
-        form.querySelector('button[type="submit"]').disabled = true;
-      } else {
-        msg.textContent = data.message || 'Submission failed';
-      }
-    } catch (err) {
-      console.error(err);
-      msg.textContent = 'Network error';
+    if (res.ok) {
+      const html = await res.text();  // Flask returns rendered receipt.html
+      msg.innerHTML = 'Vote submitted. See receipt below:<br>' + html;
+      form.querySelector('button[type="submit"]').disabled = true;
+    } else {
+      const text = await res.text();
+      msg.textContent = text || 'Submission failed';
     }
-  });
+  } catch (err) {
+    console.error(err);
+    msg.textContent = 'Network error';
+  }
+});
 });

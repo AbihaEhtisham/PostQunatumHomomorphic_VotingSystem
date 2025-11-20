@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Live Vote Totals</title>
+</head>
+<body>
+  <h1>Live Voting Results (Real-Time)</h1>
+
+  <ul>
+    {% for name, count in results.items() %}
+      <li><b>{{ name }}:</b> {{ count }}</li>
+    {% endfor %}
+  </ul>
+
+  <a href="/">Back to Home</a>
+</body>
+</html>

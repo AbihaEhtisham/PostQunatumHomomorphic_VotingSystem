@@ -24,7 +24,9 @@ async function loadResults(){
     const data = await res.json();
     const div = document.getElementById('resultsBlock');
     if (res.ok) {
-      div.innerHTML = '<pre>' + JSON.stringify(data.tally, null, 2) + '</pre>';
+      div.innerHTML = Object.entries(data.tally)
+                     .map(([k,v])=>`Candidate ${k}: ${v}`)
+                     .join('<br>');
     } else {
       div.textContent = data.message || 'Could not load results';
     }

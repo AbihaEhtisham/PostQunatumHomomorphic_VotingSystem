@@ -4,24 +4,17 @@ import sqlite3
 import base64
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session, send_from_directory
 from werkzeug.security import generate_password_hash, check_password_hash
+from crypto import *
+from crypto import load_or_create_bfv_context
 
-# pqcrypto stubs (replace with real implementations later)
-from pqcrypto.kyber_dilithium_stub import (
-    get_kyber_public_bytes,
-    kyber_decapsulate_bytes,
-    dilithium_verify_bytes,
-)
-from pqcrypto.bfv_stub import (
-    bfv_encrypt_vote_proto,
-    bfv_add_and_decrypt_all_proto,
-    bfv_init_proto,
-)
+bfv_ctx = load_or_create_bfv_context()
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, 'voters.db')
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
-app.secret_key = 'dev-secret-key-change-this'  # change in production
+app.secret_key = os.urandom(16)
+
 
 # ---- DB helpers ----
 def init_db():
@@ -49,42 +42,25 @@ def init_db():
     conn.commit()
     conn.close()
 
-init_db()
-bfv_init_proto()  # initialize BFV prototype (stub or real)
-
-@app.route('/register', methods=['GET','POST'])
-def register():
-    if request.method == 'GET':
-        return """
-        <h3>Dev register (use only during development)</h3>
-        <form method="post">
-            Name: <input name="name"><br>
-            CNIC: <input name="cnic"><br>
-            <button>Register</button>
-        </form>
-        """
-    name = request.form.get('name').strip()
-    cnic = request.form.get('cnic').strip()
-    if not (name and cnic):
-        return "Missing fields", 400
-
+def update_votes_table():
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     try:
-        c.execute('INSERT INTO voters (name, cnic) VALUES (?, ?)', (name, cnic))
-        conn.commit()
-    except sqlite3.IntegrityError:
-        conn.close()
-        return "CNIC already registered", 409
+        c.execute("ALTER TABLE votes ADD COLUMN receipt_hash TEXT")
+    except sqlite3.OperationalError:
+        pass  # column already exists
+    conn.commit()
     conn.close()
-    return f"Dev registered {name} ({cnic}). You can now signup."
 
+update_votes_table()
+
+# ---- Routes ----
+
+@app.route('/', endpoint='index')
+def index():
+    return render_template("index.html")
 
 # ---- Routes: pages ----
-@app.route('/')
-def index():
-    return redirect(url_for('login_page'))
-
 @app.route('/login', methods=['GET'])
 def login_page():
     return render_template('login.html')
@@ -95,10 +71,48 @@ def vote_page():
         return redirect(url_for('login_page'))
     return render_template('vote.html')
 
-@app.route('/results', methods=['GET'])
-def results_page():
-    tally = bfv_add_and_decrypt_all_proto()
-    return render_template('results.html', tally=tally)
+@app.route('/results')
+def results():
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute('SELECT bfv_cipher FROM votes')
+    rows = c.fetchall()
+    conn.close()
+    if not rows:
+        return "No votes yet"
+    total = None                                 # Homomorphic sum
+    for (enc_bytes,) in rows:
+        vote_vec = ts.bfv_vector_from(bfv_ctx, enc_bytes)
+        if total is None:
+            total = vote_vec
+        else:
+            total += vote_vec
+    tally = total.decrypt()[0]
+    return render_template("results.html", tally=tally)
+
+@app.route('/live_votes')
+def live_votes():
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute('SELECT bfv_cipher FROM votes')
+    rows = c.fetchall()
+    conn.close()
+
+    if not rows:
+        return "No votes yet"
+
+    total = None
+    for row in rows:
+        cipher_blob = row[0]
+        vote_vec = ts.bfv_vector_from(bfv_ctx, cipher_blob)
+        total = vote_vec if total is None else total + vote_vec
+
+    tally_vector = total.decrypt()
+
+    candidate_names = ["Alice", "Bob", "Charlie"]
+    results = {candidate_names[i]: tally_vector[i] for i in range(len(candidate_names))}
+
+    return render_template("live_votes.html", results=results)
 
 # ---- Login API ----
 @app.route('/login', methods=['POST'])
@@ -125,27 +139,81 @@ def logout():
     session.clear()
     return ('', 204)
 
-# ---- PQC / Vote API (unchanged) ----
-@app.route('/pqc/kyber_pub', methods=['GET'])
-def get_kyber_pk():
-    pk_bytes = get_kyber_public_bytes()
-    return jsonify({'kyber_pk': base64.b64encode(pk_bytes).decode()})
-
-@app.route('/vote', methods=['POST'])
+@app.route('/submit_vote', methods=['POST'])
 def submit_vote():
     if 'cnic' not in session:
-        return jsonify({'message':'Not authenticated'}), 403
-    # (vote submission code stays as-is)
-    return jsonify({'message':'Vote endpoint placeholder'}), 200
+        return "Not authenticated", 403
 
-@app.route('/api/results', methods=['GET'])
-def api_results():
-    tally = bfv_add_and_decrypt_all_proto()
-    return jsonify({'tally': tally})
+    candidate = request.form.get('candidate')
+    if candidate is None:
+        return "No candidate selected", 400
 
-@app.route('/static/<path:fp>')
-def static_proxy(fp):
-    return send_from_directory('static', fp)
+    try:
+        candidate_index = int(candidate)
+    except ValueError:
+        return "Invalid candidate", 400
+     
+    candidate_names = ["Alice", "Bob", "Charlie"]  # same order as vote.html
+    candidate_index = int(candidate)
+
+    # dynamic 1-hot vector
+    vote_vec = [0] * len(candidate_names)
+    vote_vec[candidate_index] = 1
+
+    with sqlite3.connect(DB_PATH) as conn:
+        c = conn.cursor()
+        c.execute('SELECT id FROM votes WHERE voter_cnic=?', (session['cnic'],))
+        if c.fetchone():
+            return "You have already voted!", 403
+
+    # Encrypt one-hot vector
+    enc_bytes = encrypt_vote(bfv_ctx, vote_vec)
+
+    # Load keys
+    with sqlite3.connect(DB_PATH) as conn:
+        c = conn.cursor()
+        c.execute('SELECT dilithium_privkey, dilithium_pubkey FROM voters WHERE cnic=?', (session['cnic'],))
+        row = c.fetchone()
+
+    if not row:
+        return "Voter not found", 404
+
+    privkey, pubkey = row
+
+    sig = sign_bytes(privkey, enc_bytes)
+    receipt = receipt_hash(enc_bytes, sig)
+
+    # Store as BLOBs
+    with sqlite3.connect(DB_PATH) as conn:
+        c = conn.cursor()
+        c.execute('''
+            INSERT INTO votes (voter_cnic, bfv_cipher, signature, receipt_hash)
+            VALUES (?, ?, ?, ?)
+        ''', (
+            session['cnic'],
+            sqlite3.Binary(enc_bytes),
+            sqlite3.Binary(sig),
+            receipt
+        ))
+        conn.commit()
+
+    return render_template("receipt.html", receipt_hash=receipt)
+
+@app.route('/verify', methods=['GET','POST'])
+def verify_vote():
+    with sqlite3.connect(DB_PATH) as conn:
+        c = conn.cursor()
+        c.execute('SELECT receipt_hash FROM votes')
+        all_hashes = [row[0] for row in c.fetchall()]
+
+    searched_hash = None
+    found = False
+    if request.method == 'POST':
+        searched_hash = request.form.get('receipt', '').strip()
+        if searched_hash in all_hashes:
+            found = True
+
+    return render_template("verify.html", all_hashes=all_hashes, searched_hash=searched_hash, found=found)
 
 # ---- Signup route (single, working) ----
 @app.route('/signup', methods=['GET','POST'])
@@ -175,23 +243,31 @@ def signup():
     if len(password) < 10 or not re.search(r'[A-Z]', password) or not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
         return jsonify({'message':'Password does not meet requirements'}), 400
 
-    # Validate CNIC + Name in DB (pre-registered)
+    # Check pre-registered voter exists and password_hash is NULL
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute('SELECT id FROM voters WHERE cnic=? AND name=? AND password_hash IS NULL', (cnic, name))
-
     row = c.fetchone()
     if not row:
         conn.close()
         return jsonify({'message':'CNIC or Name not valid or already registered'}), 400
 
-    # Update DB with hashed password & email
-    c.execute('UPDATE voters SET password_hash=?, email=? WHERE cnic=?',
-              (generate_password_hash(password), email, cnic))
+    voter_id = row[0]
+
+    # Generate Dilithium keys
+    pk, sk = generate_keys()
+
+    # Update DB with hashed password, email, and generated keys
+    c.execute('''
+        UPDATE voters
+        SET password_hash=?, email=?, dilithium_pubkey=?, dilithium_privkey=?
+        WHERE id=?
+    ''', (generate_password_hash(password), email, pk, sk, voter_id))
     conn.commit()
     conn.close()
 
     return jsonify({'message':'Signup successful! You can now log in.'}), 200
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
