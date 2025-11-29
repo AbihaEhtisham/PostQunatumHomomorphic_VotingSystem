@@ -22,17 +22,28 @@
             font-weight: 600;
         }
 
-        /* Optional: make error text red */
+        /* Error text block */
         .error-message {
             color: #ffdddd;
-            background: rgba(255,0,0,0.2);
-            padding: 10px;
+            background: rgba(255, 0, 0, 0.2);
+            padding: 10px 14px;
             border-radius: 5px;
-            margin-top: 10px;
+            margin-top: 15px;
             text-align: center;
+            border: 1px solid rgba(255, 0, 0, 0.4);
+            font-size: 15px;
         }
 
-        /* Adjust login box spacing */
+        /* Helper text */
+        .helper-text {
+            margin-top: 12px;
+            font-size: 0.9rem;
+            color: #d0d0d0;
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        /* Form container spacing */
         .login-container {
             margin-top: 20px;
         }
@@ -43,20 +54,27 @@
 <h1 class="page-title">Voter Verification</h1>
 
 <div class="login-container">
+
     <form method="POST">
 
-        <label>Name</label>
-        <input type="text" name="name" placeholder="Enter voter full name" required>
+        <label for="name">Name</label>
+        <input id="name" type="text" name="name" placeholder="Enter voter full name" required>
 
-        <label>CNIC</label>
-        <input type="text" name="cnic" placeholder="XXXXX-XXXXXXX-X" required>
+        <label for="cnic">CNIC</label>
+        <input id="cnic" type="text" name="cnic" placeholder="XXXXX-XXXXXXX-X" required>
 
-        <button type="submit">Verify</button>
+        <button type="submit">Verify in NADRA</button>
     </form>
 
+    <!-- Show NADRA errors or face verification failures -->
     {% if error %}
         <p class="error-message">{{ error }}</p>
     {% endif %}
+
+    <p class="helper-text">
+        Step 1: Enter the voter's name and CNIC to verify eligibility in the NADRA database.<br>
+        Step 2: If the voter is found, the system will automatically proceed to face verification.
+    </p>
 </div>
 
 </body>

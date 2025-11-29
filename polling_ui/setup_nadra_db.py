@@ -1,14 +1,12 @@
+# setup_nadra_db.py
 import sqlite3
 
 conn = sqlite3.connect("nadra.db")
 c = conn.cursor()
 
-# Drop old table if it exists (OPTIONAL)
-c.execute("DROP TABLE IF EXISTS voters")
-
-# Create new table
+# 1️⃣ Create voters table only if it does NOT already exist
 c.execute("""
-CREATE TABLE voters (
+CREATE TABLE IF NOT EXISTS voters (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     cnic TEXT NOT NULL UNIQUE,
@@ -16,16 +14,21 @@ CREATE TABLE voters (
 )
 """)
 
-# Insert sample NADRA-approved voters
+# 2️⃣ Insert sample voters safely (no duplicates allowed)
 sample_data = [
     ("Abiha Ehtisham", "35202-1234567-1", "placeholder"),
     ("Azka Saqib", "35201-9876543-0", "placeholder"),
     ("Eman Fatima", "61101-4567890-2", "placeholder")
 ]
 
-c.executemany("INSERT INTO voters (name, cnic, face_template) VALUES (?, ?, ?)", sample_data)
+for name, cnic, face in sample_data:
+    # INSERT OR IGNORE prevents duplicate CNIC errors
+    c.execute("""
+        INSERT OR IGNORE INTO voters (name, cnic, face_template)
+        VALUES (?, ?, ?)
+    """, (name, cnic, face))
 
 conn.commit()
 conn.close()
 
-print("NADRA database created with sample voters.")
+print("NADRA database is ready. Voters table ensured and sample voters inserted.")
