@@ -15,8 +15,8 @@ let verified = false;
 
 function setStatus(message, type = "info") {
     statusBox.textContent = message;
-    statusBox.className = ""; // reset classes
-    statusBox.classList.add(type); // you can style .info, .success, .error in CSS
+    statusBox.className = "";
+    statusBox.classList.add(type);
 }
 
 async function startCamera() {
@@ -24,33 +24,29 @@ async function startCamera() {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
         video.srcObject = stream;
         streamStarted = true;
+
         setStatus("Camera initialized. Please look directly at the camera.", "info");
 
         startTime = Date.now();
         timeLeftSpan.textContent = MAX_SECONDS.toString();
 
-        // start verification loop
-        verifyInterval = setInterval(captureAndVerify, 2000); // every 2 seconds
-
-        // start countdown timer
+        verifyInterval = setInterval(captureAndVerify, 2000);
         timerInterval = setInterval(handleTimer, 1000);
+
     } catch (err) {
-        console.error("Error accessing webcam:", err);
+        console.error("Camera error:", err);
         setStatus("Unable to access camera. Please check permissions.", "error");
     }
 }
 
 function handleTimer() {
-    if (verified) {
-        clearInterval(timerInterval);
-        return;
-    }
+    if (verified) return;
+
     const elapsed = (Date.now() - startTime) / 1000;
     const remaining = Math.max(0, Math.ceil(MAX_SECONDS - elapsed));
     timeLeftSpan.textContent = remaining.toString();
 
     if (remaining <= 0) {
-        // time out: stop verification and go back with error
         clearInterval(timerInterval);
         clearInterval(verifyInterval);
         setStatus("Time limit exceeded. Voter not recognized.", "error");
@@ -64,11 +60,7 @@ function handleTimer() {
 async function captureAndVerify() {
     if (!streamStarted || verifying || verified) return;
 
-    // sometimes early frames are invalid; guard against that
-    if (video.videoWidth === 0 || video.videoHeight === 0) {
-        console.log("Video not ready yet, skipping frame.");
-        return;
-    }
+    if (video.videoWidth === 0) return;
 
     verifying = true;
     setStatus("Scanning face...", "info");
@@ -76,6 +68,7 @@ async function captureAndVerify() {
     const canvas = document.createElement("canvas");
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
+
     const ctx = canvas.getContext("2d");
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
@@ -88,53 +81,46 @@ async function captureAndVerify() {
             body: JSON.stringify({ image: dataUrl })
         });
 
-        if (!response.ok) {
-            console.error("Server responded with status", response.status);
-            setStatus("Error during verification. Retrying...", "error");
-            return;
-        }
-
         const result = await response.json();
-        console.log("Verify response:", result);
+        console.log("Verification result:", result);
 
         if (result.status === "verified") {
             verified = true;
 
-            // Show success modal if it exists
-            const modal = document.getElementById("successModal");
-            if (modal) {
-                modal.style.display = "flex";
-            }
-
-            setStatus("Voter verified. Proceeding to ballot…", "success");
-
+            setStatus("Face verified successfully! Redirecting…", "success");
             clearInterval(verifyInterval);
             clearInterval(timerInterval);
 
-            // Redirect to ballot after short delay
-            setTimeout(() => {
-                window.location.href = "/vote";
-            }, 2000);
+            // stop webcam stream
+            if (video.srcObject) {
+                video.srcObject.getTracks().forEach(t => t.stop());
+            }
 
-        } else if (result.status === "unverified") {
-            // Just keep scanning within time window
-            setStatus("Face not recognized yet. Please hold still.", "error");
+            console.log("Redirecting to /vote …");
+
+            // More reliable redirection
+            setTimeout(() => {
+                window.location.replace("/vote"); // BEST redirect method
+            }, 1200);
+
         } else {
-            // status "error" or anything else
-            setStatus("Error scanning face. Retrying...", "error");
+            setStatus("Face not recognized yet. Please hold still.", "error");
         }
+
     } catch (e) {
-        console.error("Error calling /verify_face_stream:", e);
-        setStatus("Network error. Retrying...", "error");
+        console.error("Error verifying:", e);
+        setStatus("Network or server error. Retrying…", "error");
     } finally {
         verifying = false;
     }
 }
 
-// Start camera on load
-if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-    setStatus("Requesting camera access...", "info");
-    startCamera();
-} else {
-    setStatus("This browser does not support webcam access.", "error");
-}
+// start camera on load
+window.onload = () => {
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        setStatus("Requesting camera access…", "info");
+        startCamera();
+    } else {
+        setStatus("Your browser does not support webcam access.", "error");
+    }
+};

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Cast Your Vote</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/vote.css') }}">
+</head>
+<body>
+
+<div class="vote-container">
+    <h2>Select Your Candidate</h2>
+
+    <div class="candidates">
+
+        <div class="candidate-card" data-candidate="Mian Ali Raza – Pakistan Unity Party">
+            <h3>Mian Ali Raza</h3>
+            <p>Pakistan Unity Party (PUP)</p>
+        </div>
+
+        <div class="candidate-card" data-candidate="Ayesha Khan – National People's Movement">
+            <h3>Ayesha Khan</h3>
+            <p>National People's Movement (NPM)</p>
+        </div>
+
+        <div class="candidate-card" data-candidate="Farooq Siddiqui – Democratic Reform Party">
+            <h3>Farooq Siddiqui</h3>
+            <p>Democratic Reform Party (DRP)</p>
+        </div>
+
+        <div class="candidate-card" data-candidate="Sadaf Rehman – Green Future Alliance">
+            <h3>Sadaf Rehman</h3>
+            <p>Green Future Alliance (GFA)</p>
+        </div>
+
+    </div>
+
+    <form id="voteForm" method="POST" action="/submit_vote">
+        <input type="hidden" id="selected_candidate" name="candidate">
+        <button type="submit" id="submitBtn" disabled>Cast Vote</button>
+    </form>
+</div>
+
+<script src="{{ url_for('static', filename='js/vote.js') }}"></script>
+
+</body>
+</html>
