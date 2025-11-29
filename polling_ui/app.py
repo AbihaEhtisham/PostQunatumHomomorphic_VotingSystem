@@ -12,10 +12,6 @@ import numpy as np
 app = Flask(__name__)
 app.secret_key = 'your-secret-key'
 
-
-
-
-
 @app.route('/voter_validation', methods=['GET', 'POST'])
 def voter_validation():
     error = None

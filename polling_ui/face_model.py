@@ -4,8 +4,8 @@ from deepface import DeepFace  # or you can use facenet-pytorch / arcface
 import os
 import pickle
 
-# Path to store face embeddings for voters
-FACE_DB_FILE = 'face_db.pkl'
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+FACE_DB_FILE = os.path.join(BASE_DIR,"face_db.pkl")
 
 # Load existing embeddings
 if os.path.exists(FACE_DB_FILE):
