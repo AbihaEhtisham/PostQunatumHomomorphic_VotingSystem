@@ -83,26 +83,36 @@ def verify_face_page():
 def verify_face_stream():
     cnic = session.get('voter_cnic')
     if not cnic:
-        return jsonify({"status": "error", "message": "No voter in session."})
+        # Bad client state; send 400
+        return jsonify({"status": "error", "message": "No voter in session."}), 400
 
     data = request.get_json(silent=True) or {}
     image_data = data.get("image")
 
     if not image_data:
-        return jsonify({"status": "error", "message": "Empty frame"})
+        # No frame sent, but don't crash
+        return jsonify({"status": "error", "message": "Empty frame"}), 200
 
     try:
+        # Handle data URL "data:image/jpeg;base64,..."
         if "," in image_data:
             _, encoded = image_data.split(",", 1)
         else:
             encoded = image_data
 
-        img_bytes = base64.b64decode(encoded)
+        import base64
+        img_bytes = base64.b64decode(encoded or "")
+        if not img_bytes:
+            # Empty buffer -> just tell frontend to retry
+            print("Face error: empty image buffer")
+            return jsonify({"status": "error", "message": "Empty image buffer"}), 200
+
         nparr = np.frombuffer(img_bytes, np.uint8)
         frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
         if frame is None:
-            return jsonify({"status": "error", "message": "Image decode failed"})
+            print("Face error: could not decode frame")
+            return jsonify({"status": "error", "message": "Image decode failed"}), 200
 
         ok = verify_face(cnic, frame)
 
@@ -110,11 +120,14 @@ def verify_face_stream():
             session['face_verified'] = True
             return jsonify({"status": "verified", "redirect": url_for("vote_page")})
         else:
-            return jsonify({"status": "unverified"})
+            # Not verified (either low similarity or no face detected)
+            return jsonify({"status": "unverified"}), 200
 
     except Exception as e:
+        # Catch *all* DeepFace / OpenCV weirdness, never crash
         print("Face error:", e)
-        return jsonify({"status": "error", "message": "Internal error"})
+        return jsonify({"status": "error", "message": "Internal error during face verification."}), 200
+
 
 
 # ---------------------------
