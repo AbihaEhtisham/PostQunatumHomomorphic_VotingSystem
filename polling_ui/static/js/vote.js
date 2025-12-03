@@ -4,16 +4,14 @@ const cards = document.querySelectorAll(".candidate-card");
 const submitBtn = document.getElementById("submitBtn");
 const selectedInput = document.getElementById("selected_candidate");
 
-cards.forEach(card => {
+cards.forEach((card, index) => {
     card.addEventListener("click", () => {
-
         cards.forEach(c => c.classList.remove("selected"));
         card.classList.add("selected");
 
-        selected = card.getAttribute("data-candidate");
-        selectedInput.value = selected;
-
+        selectedInput.value = index; // send index, not name
         submitBtn.disabled = false;
         submitBtn.classList.add("enabled");
     });
 });
+

@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Vote Receipt</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body style="background:#222; color:#fff;">
+    <div class="container">
+        <h2>Your Vote Receipt</h2>
+        <p>Keep this hash to verify your vote:</p>
+        <code>{{ receipt_hash }}</code><br><br>
+        <a class="btn" href="{{ url_for('voter_validation') }}">Back</a>
+    </div>
+</body>
+</html>

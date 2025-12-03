@@ -19,7 +19,13 @@
             <input type="password" id="agent_key" name="agent_key" required>
 
             <button type="submit">Login</button>
-        </form>
+          </form>
+            <div style="margin-top: 12px;">
+               <a class="btn" href="{{ url_for('verify_vote') }}">Verify Vote</a>
+            </div>
+            <div style="margin-top: 12px;">
+               <a class="btn" href="{{ url_for('live_votes') }}">Live Votes</a>
+            </div>
 
         {% with messages = get_flashed_messages() %}
           {% if messages %}

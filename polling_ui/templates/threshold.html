@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Threshold Decryption</title>
+</head>
+<body style="background:#222; color:#fff;">
+<h2>Threshold Decryption Panel</h2>
+
+<h3>Status:</h3>
+<ul>
+    <li>Agent 1 Share: {{ "✔️ Loaded" if a1 else "❌ Missing" }}</li>
+    <li>Agent 2 Share: {{ "✔️ Loaded" if a2 else "❌ Missing" }}</li>
+</ul>
+
+<hr>
+
+<h3>Submit Agent Share</h3>
+
+<form action="/submit_agent_share" method="POST">
+    <label>Select Agent:</label>
+    <select name="agent">
+        <option value="agent1">Agent 1</option>
+        <option value="agent2">Agent 2</option>
+    </select>
+
+    <br><br>
+
+    <textarea name="share" placeholder="Paste your key share here..." required></textarea>
+
+    <br><br>
+
+    <button type="submit">Submit Share</button>
+</form>
+
+<hr>
+
+{% if a1 and a2 %}
+<form action="/decrypt_tally" method="POST">
+    <button style="padding: 10px; font-size: 16px; background: green; color: white;">
+        🔐 Decrypt Final Tally
+    </button>
+</form>
+{% else %}
+<p><b>Waiting for both agent shares...</b></p>
+{% endif %}
+
+</body>
+</html>
