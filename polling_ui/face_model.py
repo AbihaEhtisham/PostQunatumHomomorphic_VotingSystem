@@ -38,7 +38,7 @@ def get_face_embedding_from_frame(frame, enforce=True):
     return reps[0]["embedding"]
 
 
-def verify_face(cnic, frame, threshold=0.55):
+def verify_face(cnic, frame, threshold=0.40):
     """
     Check if captured frame matches stored embedding for CNIC.
     Returns True only if cosine similarity >= threshold.
