@@ -4,7 +4,7 @@ from face_model import register_face
 
 # CNIC must match what's in nadra.db
 CNIC = "35202-1234567-1"   
-IMAGE_PATH = "abiha.jpg"   
+IMAGE_PATH = "Azka.jpg"   
 
 frame = cv2.imread(IMAGE_PATH)
 if frame is None:

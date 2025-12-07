@@ -21,7 +21,7 @@ def get_face_embedding_from_frame(frame, enforce=True):
     Extract embedding from a BGR OpenCV frame using DeepFace/ArcFace.
     If enforce=False, it will not crash if no face is clearly detected.
     """
-    """# Convert BGR -> RGB
+    # Convert BGR -> RGB
     rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
     # DeepFace.represent accepts numpy array as img_path
@@ -35,8 +35,7 @@ def get_face_embedding_from_frame(frame, enforce=True):
     if not reps or "embedding" not in reps[0]:
         return None
 
-    return reps[0]["embedding"]"""
-    return np.random.rand(512)
+    return reps[0]["embedding"]
 
 
 def verify_face(cnic, frame, threshold=0.55):
@@ -45,7 +44,7 @@ def verify_face(cnic, frame, threshold=0.55):
     Returns True only if cosine similarity >= threshold.
     """
 
-    """if cnic not in face_db:
+    if cnic not in face_db:
         print(f"No embedding found for CNIC {cnic}")
         return False
 
@@ -73,8 +72,7 @@ def verify_face(cnic, frame, threshold=0.55):
     except Exception as e:
         # Any DeepFace / OpenCV error is treated as "no match"
         print("Face verification error:", e)
-        return False"""
-    return True
+        return False
 
 
 def register_face(cnic, frame):
