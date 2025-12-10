@@ -5,7 +5,6 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/agent.css') }}">
     
     <style>
-        /* Page Title */
         .page-title {
             text-align: center;
             margin-top: 40px;
@@ -16,13 +15,11 @@
             text-shadow: 0px 2px 8px rgba(0,0,0,0.3);
         }
 
-        /* Make labels white */
         label {
             color: white !important;
             font-weight: 600;
         }
 
-        /* Error text block */
         .error-message {
             color: #ffdddd;
             background: rgba(255, 0, 0, 0.2);
@@ -34,7 +31,6 @@
             font-size: 15px;
         }
 
-        /* Helper text */
         .helper-text {
             margin-top: 12px;
             font-size: 0.9rem;
@@ -43,7 +39,6 @@
             line-height: 1.5;
         }
 
-        /* Form container spacing */
         .login-container {
             margin-top: 20px;
         }
@@ -55,18 +50,39 @@
 
 <div class="login-container">
 
-    <form method="POST">
+    <!-- Disable autocomplete for entire form -->
+    <form method="POST" autocomplete="off">
+
+        <!-- Hidden dummy fields to block Chrome autofill -->
+        <input type="text" name="fakeinput" style="display:none">
+        <input type="password" name="fakepass" style="display:none">
 
         <label for="name">Name</label>
-        <input id="name" type="text" name="name" placeholder="Enter voter full name" required>
+        <input id="name"
+               type="text"
+               name="name"
+               placeholder="Enter voter full name"
+               required
+               autocomplete="off"
+               autocorrect="off"
+               autocapitalize="off"
+               spellcheck="false">
 
         <label for="cnic">CNIC</label>
-        <input id="cnic" type="text" name="cnic" placeholder="XXXXX-XXXXXXX-X" required>
+        <input id="cnic"
+               type="text"
+               name="cnic"
+               placeholder="XXXXX-XXXXXXX-X"
+               required
+               autocomplete="off"
+               inputmode="numeric"
+               autocorrect="off"
+               autocapitalize="off"
+               spellcheck="false">
 
         <button type="submit">Verify in NADRA</button>
     </form>
 
-    <!-- Show NADRA errors or face verification failures -->
     {% if error %}
         <p class="error-message">{{ error }}</p>
     {% endif %}

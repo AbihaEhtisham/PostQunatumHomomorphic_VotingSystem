@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -11,21 +11,42 @@
     <div class="login-box">
         <h2>Polling Station Login</h2>
 
-        <form method="POST">
+        <!-- Disable autocomplete for entire form -->
+        <form method="POST" autocomplete="off">
+
+            <!-- Hidden dummy fields to block Chrome autocomplete -->
+            <input type="text" name="fakeuser" style="display:none">
+            <input type="password" name="fakepass" style="display:none">
+
             <label for="station_id">Station ID</label>
-            <input type="text" id="station_id" name="station_id" required>
+            <input type="text" 
+                   id="station_id" 
+                   name="station_id" 
+                   required
+                   autocomplete="off"
+                   autocorrect="off"
+                   autocapitalize="off"
+                   spellcheck="false">
 
             <label for="agent_key">Agent Key</label>
-            <input type="password" id="agent_key" name="agent_key" required>
+            <input type="password" 
+                   id="agent_key" 
+                   name="agent_key" 
+                   required
+                   autocomplete="new-password"
+                   autocorrect="off"
+                   autocapitalize="off"
+                   spellcheck="false">
 
             <button type="submit">Login</button>
-          </form>
-            <div style="margin-top: 12px;">
-               <a class="btn" href="{{ url_for('verify_vote') }}">Verify Vote</a>
-            </div>
-            <div style="margin-top: 12px;">
-               <a class="btn" href="{{ url_for('live_votes') }}">Live Votes</a>
-            </div>
+        </form>
+
+        <div style="margin-top: 12px;">
+            <a class="btn" href="{{ url_for('verify_vote') }}">Verify Vote</a>
+        </div>
+        <div style="margin-top: 12px;">
+            <a class="btn" href="{{ url_for('live_votes') }}">Live Votes</a>
+        </div>
 
         {% with messages = get_flashed_messages() %}
           {% if messages %}
