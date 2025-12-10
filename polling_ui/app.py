@@ -228,8 +228,8 @@ def verify_face_stream():
 
         if ok:
             session['face_verified'] = True
-
-            conn = sqlite3.connect('voters.db')
+            conn = sqlite3.connect(DB_PATH)
+            
             c = conn.cursor()
 
             # If voter not already in voters.db → insert and generate keys
