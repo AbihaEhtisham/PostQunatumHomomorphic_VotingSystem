@@ -3,19 +3,20 @@ body {
     margin: 0;
     padding: 0;
     height: 100vh;
-    background: #fff;
+    background: #000; /* changed to black */
     font-family: Arial, sans-serif;
     display: flex;
     justify-content: center;
     align-items: center;
     flex-direction: column;
+    color: #fff;
 }
 
 /* Voting start text */
 #votingStart {
     font-size: 48px;
     font-weight: bold;
-    color: #000;
+    color: #ffd700; /* golden for contrast */
     margin-bottom: 20px;
     text-align: center;
 }
@@ -24,55 +25,61 @@ body {
 #timer {
     font-size: 36px;
     font-weight: bold;
-    color: #333;
+    color: #fff;
     margin-bottom: 40px;
 }
 
-/* Login box */
+/* Authentication box */
 .login-container {
     display: none; /* hidden until voting time */
-    background: #000;
-    padding: 30px 40px;
-    border-radius: 10px;
+    background: #111; /* dark grey for contrast */
+    padding: 50px 60px; /* increased size */
+    border-radius: 12px;
     text-align: center;
-    width: 300px;
+    width: 400px; /* wider */
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
 }
 
 .login-container h2 {
-    color: #fff;
-    margin-bottom: 20px;
+    color: #ffd700; /* golden header */
+    margin-bottom: 25px;
+    font-size: 28px; /* larger */
 }
 
 /* Inputs */
 input[type="text"], input[type="password"] {
     width: 100%;
-    padding: 10px;
-    margin-bottom: 15px;
-    border-radius: 5px;
+    padding: 14px;
+    margin-bottom: 20px;
+    border-radius: 6px;
     border: none;
-    font-size: 16px;
+    font-size: 18px;
+    background: #222;
+    color: #fff;
 }
 
 /* Disable browser autofill styles */
 input[type="text"]:-webkit-autofill,
 input[type="password"]:-webkit-autofill {
-    -webkit-box-shadow: 0 0 0px 1000px black inset;
+    -webkit-box-shadow: 0 0 0px 1000px #222 inset;
     -webkit-text-fill-color: white;
 }
 
 /* Button */
 button {
     width: 100%;
-    padding: 12px;
+    padding: 14px;
     background: #ffd700;
     color: #000;
     border: none;
-    border-radius: 6px;
-    font-size: 16px;
+    border-radius: 8px;
+    font-size: 18px;
     font-weight: bold;
     cursor: pointer;
+    transition: all 0.3s ease;
 }
 
 button:hover {
     background: #ffc107;
+    transform: scale(1.05);
 }

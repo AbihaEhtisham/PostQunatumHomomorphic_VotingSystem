@@ -1,39 +1,33 @@
-<h1>Live Vote Count</h1>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Live Vote Count</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+        #vote-count { font-size: 48px; margin-top: 20px; color: #2c3e50; }
+    </style>
+</head>
+<body>
+    <h1>Live Votes Cast</h1>
+    <div id="vote-count">0</div>
 
-<table id="votes-table" border="1">
-    <tr>
-        <th>Candidate</th>
-        <th>Votes</th>
-    </tr>
-</table>
+    <script>
+        async function loadVotes() {
+            try {
+                const response = await fetch("http://127.0.0.1:5000/api/live_votes");
+                const data = await response.json();
 
-<script>
-async function loadVotes() {
-    const response = await fetch("http://127.0.0.1:5000/api/live_votes");  
-    const data = await response.json();
+                const voteCountDiv = document.getElementById("vote-count");
+                voteCountDiv.textContent = data.total_votes_cast;
+            } catch (err) {
+                console.error("Error fetching live votes:", err);
+            }
+        }
 
-    const table = document.getElementById("votes-table");
-
-    // clear old rows
-    table.innerHTML = `
-        <tr>
-            <th>Candidate</th>
-            <th>Votes</th>
-        </tr>
-    `;
-
-    for (let i = 0; i < data.candidates.length; i++) {
-        table.innerHTML += `
-            <tr>
-                <td>${data.candidates[i]}</td>
-                <td>${data.votes[i]}</td>
-            </tr>
-        `;
-    }
-}
-
-// load every 5 sec
-setInterval(loadVotes, 5000);
-loadVotes();
-</script>
-
+        // Update every 5 seconds
+        setInterval(loadVotes, 5000);
+        loadVotes();
+    </script>
+</body>
+</html>

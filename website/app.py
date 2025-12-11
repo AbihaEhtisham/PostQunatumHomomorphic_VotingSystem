@@ -4,8 +4,8 @@ import os
 
 app = Flask(__name__)
 
-# Path to DB where votes are stored (from the offline laptop)
-DB_PATH = os.path.abspath("../PostQunatumHomomorphic_VotingSystem\polling_ui\voters.db")
+# Correct DB path
+DB_PATH = os.path.abspath(r"../PostQunatumHomomorphic_VotingSystem/polling_ui/votes.db")
 
 @app.route('/')
 def index():
@@ -15,24 +15,15 @@ def index():
 def verify_vote():
     return render_template('verify_vote.html')
 
-@app.route('/live_votes', methods=['GET', 'POST'])
-def live_votes():
-    """Return current vote counts as JSON for live chart"""
+@app.route('/api/live_votes')
+def api_live_votes():
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
-    c.execute("SELECT bfv_cipher FROM votes")
-    encrypted_votes = [row[0] for row in c.fetchall()]
+    c.execute("SELECT COUNT(*) FROM votes")
+    total_votes = c.fetchone()[0]
     conn.close()
 
-    # For demonstration, return random counts or decrypt votes if available
-    # Here just return placeholder counts
-    counts = {
-        "Mian Ali Raza": len(encrypted_votes),   # replace with real decryption logic
-        "Ayesha Khan": len(encrypted_votes) // 2,
-        "Farooq Siddiqui": len(encrypted_votes) // 3,
-        "Sadaf Rehman": len(encrypted_votes) // 4,
-    }
-    return jsonify(counts)
+    return jsonify({"total_votes_cast": total_votes})
 
 if __name__ == '__main__':
-    app.run(debug=True, port=8000)  # runs on port 8000
+    app.run(debug=True, port=8000)

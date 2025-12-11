@@ -1,17 +1,17 @@
 import sys, os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
-from utils import BASE_DIR, verify_agent_key, is_voting_open
+from polling_ui.utils import BASE_DIR, verify_agent_key, is_voting_open
 import sqlite3
 import cv2
 import json
 import bcrypt
 import numpy as np
-from face_model import verify_face
-from vote_manager import init_votes_db
-from bfv import encrypt_vote, load_or_create_bfv_context, decrypt_vote
-from dilithium import sign_bytes, receipt_hash, generate_keys
-from threshold import combine_shares
+from polling_ui.face_model import verify_face
+from polling_ui.vote_manager import init_votes_db
+from polling_ui.bfv import encrypt_vote, load_or_create_bfv_context, decrypt_vote
+from polling_ui.dilithium import sign_bytes, receipt_hash, generate_keys
+from polling_ui.threshold import combine_shares
 import builtins
 builtins.long = int
 
@@ -20,7 +20,7 @@ import tenseal as ts
 print(os.path.exists(os.path.join(BASE_DIR, 'templates', 'receipt.html')))
 
 
-from vote_manager import init_votes_db, save_vote, get_all_votes
+from polling_ui.vote_manager import init_votes_db, save_vote, get_all_votes
 DBV_PATH = os.path.join(BASE_DIR, "votes.db")
 init_votes_db(DBV_PATH)
 
@@ -111,7 +111,7 @@ def verify_vote():
     conn.close()
     return render_template('voter_verify.html', result=result, all_receipts=all_receipts)
 
-from threshold import combine_shares
+from polling_ui.threshold import combine_shares
 
 # Store partial decryptions (in memory or DB)
 # partial_decryptions = {}  # {vote_id: [share1, share2]}
@@ -389,27 +389,25 @@ def submit_vote():
     # ---- RETURN RECEIPT ----
     return render_template("receipt.html", receipt_hash=receipt)
 
+
 # ---------------------------
-# LIVE VOTES API
+# LIVE VOTES API (Encrypted votes only)
 # ---------------------------
 @app.route('/api/live_votes')
 def api_live_votes():
-    votes = get_all_votes(DBV_PATH)
-    decrypted_sums = [0] * len(candidate_names)
+    votes = get_all_votes(DBV_PATH)  # fetch all rows from votes.db
+    total_votes = len(votes)         # count how many votes were cast
 
-    for candidate, bfv in votes:
-        try:
-            # decrypt BFV votes if present
-            vote_vec = decrypt_vote(bfv_ctx, bfv) if bfv else [1 if candidate_names[i] == candidate else 0 for i in range(4)]
-            for i in range(4):
-                decrypted_sums[i] += vote_vec[i]
-        except Exception as e:
-            print("Decryption error:", e)
+    # print(f"DEBUG: Total votes cast so far: {total_votes}")  # debug print
 
-    return {"candidates": candidate_names, "votes": decrypted_sums}
+    # Return only total votes, no candidate info
+    return {"total_votes_cast": total_votes}
+
+
 @app.route('/')
 def index():
     return redirect(url_for('agent_login'))
+ 
 
 # ---------------------------
 # THRESHOLD UI ROUTES
