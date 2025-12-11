@@ -1,0 +1,39 @@
+<h1>Live Vote Count</h1>
+
+<table id="votes-table" border="1">
+    <tr>
+        <th>Candidate</th>
+        <th>Votes</th>
+    </tr>
+</table>
+
+<script>
+async function loadVotes() {
+    const response = await fetch("http://127.0.0.1:5000/api/live_votes");  
+    const data = await response.json();
+
+    const table = document.getElementById("votes-table");
+
+    // clear old rows
+    table.innerHTML = `
+        <tr>
+            <th>Candidate</th>
+            <th>Votes</th>
+        </tr>
+    `;
+
+    for (let i = 0; i < data.candidates.length; i++) {
+        table.innerHTML += `
+            <tr>
+                <td>${data.candidates[i]}</td>
+                <td>${data.votes[i]}</td>
+            </tr>
+        `;
+    }
+}
+
+// load every 5 sec
+setInterval(loadVotes, 5000);
+loadVotes();
+</script>
+

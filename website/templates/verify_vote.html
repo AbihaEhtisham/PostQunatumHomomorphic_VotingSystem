@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verify Vote</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body style="background:#222; color:#fff;">
+    <div class="container">
+        <h2>Verify a Vote</h2>
+
+        <form method="POST">
+            <label for="receipt_hash">Enter Receipt Hash:</label>
+            <input type="text" name="receipt_hash" id="receipt_hash" required>
+            <button type="submit" class="btn">Check Vote</button>
+        </form>
+
+        {% if result is defined %}
+            <div class="result">
+                {% if result %}
+                    <p style="color:#0f0;">Vote FOUND in database ✅</p>
+                {% else %}
+                    <p style="color:#f00;">Vote NOT found ❌</p>
+                {% endif %}
+            </div>
+        {% endif %}
+
+        <ul>
+            {% for r in all_receipts %}
+                <li><code>{{ r }}</code></li>
+            {% endfor %}
+        </ul>
+
+        <a class="btn" href="{{ url_for('index') }}">Back</a>
+    </div>
+</body>
+</html>

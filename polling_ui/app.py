@@ -4,6 +4,8 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 from utils import BASE_DIR, verify_agent_key, is_voting_open
 import sqlite3
 import cv2
+import json
+import bcrypt
 import numpy as np
 from face_model import verify_face
 from vote_manager import init_votes_db
@@ -17,6 +19,11 @@ import os
 import tenseal as ts
 print(os.path.exists(os.path.join(BASE_DIR, 'templates', 'receipt.html')))
 
+
+from vote_manager import init_votes_db, save_vote, get_all_votes
+DBV_PATH = os.path.join(BASE_DIR, "votes.db")
+init_votes_db(DBV_PATH)
+
 app = Flask(__name__)
 app.secret_key = 'your-secret-key'
 # initialize or load BFV context used for encryption/decryption
@@ -24,6 +31,7 @@ bfv_ctx = load_or_create_bfv_context()
 
 
 DB_PATH = os.path.join(BASE_DIR, 'voters.db')
+NADRA_DB_PATH = os.path.join(BASE_DIR, 'nadra.db')
 init_votes_db()
 
 # ---- DB helpers ----
@@ -56,20 +64,37 @@ init_db()
 # ---------------------------
 # AGENT LOGIN
 # ---------------------------
-@app.route('/agent_login', methods=['GET','POST'])
+# Load agent credentials (hashed)
+# Load hashed agent passwords
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+AGENTS_FILE = os.path.join(BASE_DIR, "static", "agents.json")
+
+with open(AGENTS_FILE, "r") as f:
+    AGENTS = json.load(f)
+
+@app.route('/agent_login', methods=['GET', 'POST'])
 def agent_login():
     if request.method == 'POST':
-        station_id = request.form.get('station_id')
-        agent_key = request.form.get('agent_key')
+        station_id = request.form.get("station_id")
+        agent_key = request.form.get("agent_key")
 
-        if verify_agent_key(station_id, agent_key):
-            session['station_id'] = station_id
-            return redirect(url_for('voter_validation'))
+        # Check if ID exists
+        if station_id not in AGENTS:
+            flash("Invalid Agent ID!")
+            return redirect(url_for("agent_login"))
+
+        hashed_pw = AGENTS[station_id].encode()
+
+        # Verify password
+        if bcrypt.checkpw(agent_key.encode(), hashed_pw):
+            # SUCCESS → redirect to face recognition page
+            return redirect(url_for("voter_validation"))
         else:
-            flash('Invalid key or station ID!')
-            return redirect(url_for('agent_login'))
+            flash("Wrong password!")
+            return redirect(url_for("agent_login"))
 
-    return render_template('agent_login.html')
+    return render_template("agent_login.html")
+
 
 @app.route('/verify_vote', methods=['GET', 'POST'])
 def verify_vote():
@@ -84,7 +109,7 @@ def verify_vote():
         result = search_hash in all_receipts
 
     conn.close()
-    return render_template('verify_vote.html', result=result, all_receipts=all_receipts)
+    return render_template('voter_verify.html', result=result, all_receipts=all_receipts)
 
 from threshold import combine_shares
 
@@ -98,31 +123,27 @@ from threshold import combine_shares
 def agent(agent_id):
     return render_template("agent.html", agent=agent_id)
 
-# ---------------------------
+"""# ---------------------------
 # LIVE VOTES PAGE
 # ---------------------------
-@app.route('/live_votes')
-def live_votes():
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute("SELECT bfv_cipher FROM votes")
-    encrypted_votes = [row[0] for row in c.fetchall()]
-    conn.close()
 
-    # Decrypt votes using BFV context
-    decrypted_sums = [0] * 4  # Assuming 4 candidates
-    for enc_bytes in encrypted_votes:
+@app.route('/api/live_votes')
+def api_live_votes():
+    votes = get_all_votes(DBV_PATH)
+    
+    candidate_names = ["Mian Ali Raza", "Ayesha Khan", "Farooq Siddiqui", "Sadaf Rehman"]
+    decrypted_sums = [0] * len(candidate_names)
+
+    for candidate, bfv in votes:
         try:
-            vote_vec = decrypt_vote(bfv_ctx, enc_bytes)  # decrypt_vote returns list
-            for i in range(len(vote_vec)):
+            vote_vec = decrypt_vote(bfv_ctx, bfv) if bfv else [1 if candidate_names[i] == candidate else 0 for i in range(4)]
+            for i in range(4):
                 decrypted_sums[i] += vote_vec[i]
         except Exception as e:
             print("Decryption error:", e)
 
-    candidate_names = ["Mian Ali Raza", "Ayesha Khan", "Farooq Siddiqui", "Sadaf Rehman"]
-    votes_display = list(zip(candidate_names, decrypted_sums))
-
-    return render_template("live_votes.html", votes=votes_display)
+    return {"candidates": candidate_names, "votes": decrypted_sums}
+"""
 
 """@app.route('/results', methods=['GET', 'POST'])
 def results():
@@ -162,7 +183,7 @@ def voter_validation():
     if not name or not cnic:
         return render_template("voter_verify.html", error="Name and CNIC are required.")
 
-    conn = sqlite3.connect('nadra.db')
+    conn = sqlite3.connect(NADRA_DB_PATH)
     c = conn.cursor()
     c.execute("SELECT * FROM voters WHERE name=? AND cnic=?", (name, cnic))
     voter = c.fetchone()
@@ -171,10 +192,11 @@ def voter_validation():
     if voter:
         session['voter_name'] = name
         session['voter_cnic'] = cnic
-        session['face_verified'] = False
-        return redirect(url_for('verify_face_page'))
+        session['face_verified'] = True
+        return redirect(url_for('vote_page'))
     else:
         return render_template("voter_verify.html", error="Voter not found in NADRA database.")
+
 
 # ---------------------------
 # FACE VERIFICATION PAGE
@@ -271,6 +293,7 @@ def vote_page():
 
     return render_template('vote.html')
 
+"""
 # ---------------------------
 # SUBMIT VOTE
 # ---------------------------
@@ -319,8 +342,71 @@ def submit_vote():
     conn.close()
 
     return render_template("receipt.html", receipt_hash=receipt)
+"""
+candidate_names = ["Mian Ali Raza", "Ayesha Khan", "Farooq Siddiqui", "Sadaf Rehman"]
 
+# ---------------------------
+# SUBMIT VOTE
+# ---------------------------
+@app.route('/submit_vote', methods=['POST'])
+def submit_vote():
+    if not session.get('face_verified'):
+        return "Error: Face not verified.", 403
 
+    candidate_index = request.form.get("candidate")
+    if candidate_index is None:
+        return "No candidate selected", 400
+
+    cnic = session.get("voter_cnic")
+    try:
+        candidate_index = int(candidate_index)
+        vote_vec = [0] * len(candidate_names)
+        vote_vec[candidate_index] = 1
+    except ValueError:
+        return "Invalid candidate", 400
+
+    # ---- ENCRYPTION ----
+    enc_bytes = encrypt_vote(bfv_ctx, vote_vec)
+
+    # ---- LOAD VOTER KEYS FROM NADRA_DB ----
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("SELECT dilithium_privkey, dilithium_pubkey FROM voters WHERE cnic=?", (cnic,))
+    row = c.fetchone()
+    conn.close()
+    if not row:
+        return "Voter not found", 404
+    privkey, pubkey = row
+
+    # ---- SIGN & CREATE RECEIPT ----
+    sig = sign_bytes(privkey, enc_bytes)
+    receipt = receipt_hash(enc_bytes, sig)
+    print("Receipt:", receipt)
+
+    # ---- STORE VOTE IN VOTES.DB ----
+    save_vote(cnic, candidate_names[candidate_index], bfv_cipher=enc_bytes, db_path=DBV_PATH)
+
+    # ---- RETURN RECEIPT ----
+    return render_template("receipt.html", receipt_hash=receipt)
+
+# ---------------------------
+# LIVE VOTES API
+# ---------------------------
+@app.route('/api/live_votes')
+def api_live_votes():
+    votes = get_all_votes(DBV_PATH)
+    decrypted_sums = [0] * len(candidate_names)
+
+    for candidate, bfv in votes:
+        try:
+            # decrypt BFV votes if present
+            vote_vec = decrypt_vote(bfv_ctx, bfv) if bfv else [1 if candidate_names[i] == candidate else 0 for i in range(4)]
+            for i in range(4):
+                decrypted_sums[i] += vote_vec[i]
+        except Exception as e:
+            print("Decryption error:", e)
+
+    return {"candidates": candidate_names, "votes": decrypted_sums}
 @app.route('/')
 def index():
     return redirect(url_for('agent_login'))

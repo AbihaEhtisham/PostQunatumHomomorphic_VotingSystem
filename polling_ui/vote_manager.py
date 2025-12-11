@@ -1,20 +1,26 @@
-# vote_manager.py
-
 import sqlite3
+import os
 from datetime import datetime
-DB_PATH = "votes.db"
+
+# ✅ Make DB path relative to this script
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, "votes.db")
 
 # ---------------------------
 # INITIALIZE DATABASE
 # ---------------------------
-def init_votes_db():
-    conn = sqlite3.connect(DB_PATH)
+def init_votes_db(db_path=DB_PATH):
+    conn = sqlite3.connect(db_path)
     c = conn.cursor()
+
+    # Drop old table if exists
+    c.execute("DROP TABLE IF EXISTS votes")
     c.execute("""
         CREATE TABLE IF NOT EXISTS votes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             cnic TEXT UNIQUE,
             candidate TEXT,
+            bfv_cipher BLOB,
             timestamp TEXT
         )
     """)
@@ -25,8 +31,8 @@ def init_votes_db():
 # ---------------------------
 # CHECK IF CNIC ALREADY VOTED
 # ---------------------------
-def has_voted(cnic):
-    conn = sqlite3.connect(DB_PATH)
+def has_voted(cnic, db_path=DB_PATH):
+    conn = sqlite3.connect(db_path)
     c = conn.cursor()
     c.execute("SELECT candidate FROM votes WHERE cnic=?", (cnic,))
     row = c.fetchone()
@@ -37,12 +43,24 @@ def has_voted(cnic):
 # ---------------------------
 # SAVE A NEW VOTE
 # ---------------------------
-def save_vote(cnic, candidate):
-    conn = sqlite3.connect(DB_PATH)
+def save_vote(cnic, candidate, bfv_cipher=None, db_path=DB_PATH):
+    conn = sqlite3.connect(db_path)
     c = conn.cursor()
     c.execute(
-        "INSERT INTO votes (cnic, candidate, timestamp) VALUES (?, ?, ?)",
-        (cnic, candidate, datetime.now().isoformat())
+        "INSERT INTO votes (cnic, candidate, bfv_cipher, timestamp) VALUES (?, ?, ?, ?)",
+        (cnic, candidate, bfv_cipher, datetime.now().isoformat())
     )
     conn.commit()
     conn.close()
+
+
+# ---------------------------
+# GET ALL VOTES
+# ---------------------------
+def get_all_votes(db_path=DB_PATH):
+    conn = sqlite3.connect(db_path)
+    c = conn.cursor()
+    c.execute("SELECT candidate, bfv_cipher FROM votes")
+    votes = c.fetchall()
+    conn.close()
+    return votes

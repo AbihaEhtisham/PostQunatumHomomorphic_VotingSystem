@@ -2,42 +2,67 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Polling Station Login</title>
+    <title>Polling Station</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/agent.css') }}">
 </head>
+
 <body>
 
-<div class="login-container">
-    <div class="login-box">
-        <h2>Polling Station Login</h2>
+    <!-- Countdown Text -->
+    <div id="votingStart">Voting starts at 10:00 AM</div>
+    <div id="timer"></div>
 
-        <form method="POST">
-            <label for="station_id">Station ID</label>
-            <input type="text" id="station_id" name="station_id" required>
+    <!-- Login Box -->
+    <div class="login-container" id="loginBox" style="display: none;">
+        <h2>Agent Login</h2>
 
-            <label for="agent_key">Agent Key</label>
-            <input type="password" id="agent_key" name="agent_key" required>
-
-            <button type="submit">Login</button>
-          </form>
-            <div style="margin-top: 12px;">
-               <a class="btn" href="{{ url_for('verify_vote') }}">Verify Vote</a>
-            </div>
-            <div style="margin-top: 12px;">
-               <a class="btn" href="{{ url_for('live_votes') }}">Live Votes</a>
-            </div>
-
+        <!-- FLASH MESSAGES -->
         {% with messages = get_flashed_messages() %}
           {% if messages %}
-            <div class="error-box">
-              {% for msg in messages %}
-                <p>{{ msg }}</p>
-              {% endfor %}
+            <div class="flash-msg">
+                {{ messages[0] }}
             </div>
           {% endif %}
         {% endwith %}
+
+       <form method="POST" action="{{ url_for('agent_login') }}" autocomplete="off">
+    <input type="text" name="station_id" placeholder="ID" required>
+    <input type="password" name="agent_key" placeholder="Password" required>
+    <button type="submit">Login</button>
+</form>
+
     </div>
-</div>
+
+<script>
+    const votingTime = new Date();
+    votingTime.setHours(9, 23, 0, 0); // Example: 12:20 AM
+
+    const timerEl = document.getElementById("timer");
+    const votingStartEl = document.getElementById("votingStart");
+    const loginBox = document.getElementById("loginBox");
+
+    function updateCountdown() {
+        const now = new Date();
+        const diff = votingTime - now;
+
+        if (diff <= 0) {
+            votingStartEl.style.display = 'none';
+            timerEl.style.display = 'none';
+            loginBox.style.display = 'block';   // SHOW LOGIN
+            clearInterval(interval);
+            return;
+        }
+
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+        timerEl.textContent = `${hours}h ${minutes}m ${seconds}s remaining`;
+    }
+
+    const interval = setInterval(updateCountdown, 1000);
+    updateCountdown();
+</script>
 
 </body>
 </html>

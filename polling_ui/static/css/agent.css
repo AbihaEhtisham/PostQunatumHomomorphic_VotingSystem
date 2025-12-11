@@ -1,85 +1,78 @@
-
+/* Full page layout */
 body {
     margin: 0;
     padding: 0;
-    font-family: "Segoe UI", Arial, sans-serif;
-    background: #0b1a33; /* Deep navy */
-    background: linear-gradient(145deg, #0b1a33, #081322, #0f1f3f);
-}
-
-
-/* Centering container */
-.login-container {
+    height: 100vh;
+    background: #fff;
+    font-family: Arial, sans-serif;
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+    flex-direction: column;
 }
 
-/* Card box */
-.login-box {
-    width: 380px;
-    background: #ffffff;
-    padding: 30px 40px;
-    border-radius: 8px;
-    border-top: 6px solid #003399; /* Official navy blue */
-    .login-box {
-    box-shadow: 0 0 25px rgba(0,0,0,0.4);
-}
-
-}
-
-/* Title */
-.login-box h2 {
-    margin-bottom: 25px;
+/* Voting start text */
+#votingStart {
+    font-size: 48px;
+    font-weight: bold;
+    color: #000;
+    margin-bottom: 20px;
     text-align: center;
-    color: #003399;
-    font-size: 22px;
-    letter-spacing: 0.5px;
 }
 
-/* Labels */
-label {
-    font-size: 14px;
+/* Countdown timer */
+#timer {
+    font-size: 36px;
+    font-weight: bold;
     color: #333;
-    font-weight: 600;
+    margin-bottom: 40px;
+}
+
+/* Login box */
+.login-container {
+    display: none; /* hidden until voting time */
+    background: #000;
+    padding: 30px 40px;
+    border-radius: 10px;
+    text-align: center;
+    width: 300px;
+}
+
+.login-container h2 {
+    color: #fff;
+    margin-bottom: 20px;
 }
 
 /* Inputs */
 input[type="text"], input[type="password"] {
     width: 100%;
     padding: 10px;
-    margin: 8px 0 20px;
-    border: 1px solid #aaa;
+    margin-bottom: 15px;
     border-radius: 5px;
-    font-size: 15px;
+    border: none;
+    font-size: 16px;
+}
+
+/* Disable browser autofill styles */
+input[type="text"]:-webkit-autofill,
+input[type="password"]:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0px 1000px black inset;
+    -webkit-text-fill-color: white;
 }
 
 /* Button */
 button {
     width: 100%;
     padding: 12px;
-    font-size: 16px;
-    background: #003399;
-    color: white;
+    background: #ffd700;
+    color: #000;
     border: none;
-    border-radius: 5px;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: bold;
     cursor: pointer;
-    font-weight: 600;
-    transition: 0.3s;
 }
 
 button:hover {
-    background: #002266;
-}
-
-/* Error box */
-.error-box {
-    margin-top: 15px;
-    padding: 10px;
-    border-left: 4px solid red;
-    background: #ffe5e5;
-    color: #b30000;
-    font-size: 14px;
-    border-radius: 5px;
+    background: #ffc107;
 }

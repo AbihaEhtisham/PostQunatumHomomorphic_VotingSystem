@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SEECS Voting 2025</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Function to update the clock
+        function updateClock() {
+            const now = new Date();
+            const options = { hour: '2-digit', minute: '2-digit', second: '2-digit' };
+            document.getElementById('clock').innerText = now.toLocaleTimeString('en-US', options);
+            
+            // Check if voting time has started (10:00 AM)
+            const votingHour = 11;
+            const votingMinute = 14;
+            if (now.getHours() >= votingHour && now.getMinutes() >= votingMinute) {
+                document.getElementById('preVoting').style.display = 'none';
+                document.getElementById('liveVoting').style.display = 'block';
+            }
+        }
+        setInterval(updateClock, 1000);
+    </script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+
+    <!-- Header -->
+    <header class="bg-blue-600 text-white p-4 flex justify-between items-center">
+        <div>
+            <h1 class="text-xl font-bold">SEECS Voting 2025</h1>
+            <p>📞 +92-300-1234567 | ✉️ seecs.voting@gmail.com</p>
+        </div>
+        <div id="clock" class="text-lg font-mono"></div>
+    </header>
+
+    <!-- Pre-voting display -->
+    <div id="preVoting" class="text-center mt-10">
+        <h2 class="text-2xl font-bold">Voting starts at 10:00 AM PST</h2>
+        <p class="mt-4">Location: SEECS Voting Portal</p>
+    </div>
+
+    <!-- Live voting display (hidden initially) -->
+    <div id="liveVoting" class="mt-10 px-10" style="display:none;">
+        <h2 class="text-2xl font-bold text-center mb-6">Live Vote Count</h2>
+        
+        <!-- Bar chart -->
+        <canvas id="voteChart" width="400" height="200"></canvas>
+
+        <script>
+            const ctx = document.getElementById('voteChart').getContext('2d');
+            const voteChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ["Candidate 1", "Candidate 2", "Candidate 3", "Candidate 4"],
+                    datasets: [{
+                        label: '# of Votes',
+                        data: [0, 0, 0, 0], // This will be updated dynamically later
+                        backgroundColor: ['red', 'blue', 'green', 'orange']
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        </script>
+
+        <!-- Verify Vote Button -->
+        <div class="flex justify-center">
+    <a href="{{ url_for('verify_vote') }}"
+       class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
+       Verify Vote
+    </a>
+</div>
+
+    </div>
+
+</body>
+</html>
+
