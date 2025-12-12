@@ -19,8 +19,8 @@ import os
 import tenseal as ts
 print(os.path.exists(os.path.join(BASE_DIR, 'templates', 'receipt.html')))
 
-
-
+DB_PATH = os.path.join(BASE_DIR, 'voters.db')
+NADRA_DB_PATH = os.path.join(BASE_DIR, 'nadra.db')
 DBV_PATH = os.path.join(BASE_DIR, "votes.db")
 init_votes_db(DBV_PATH)
 
@@ -132,48 +132,6 @@ from polling_ui.threshold import combine_shares
 def agent(agent_id):
     return render_template("agent.html", agent=agent_id)
 
-"""# ---------------------------
-# LIVE VOTES PAGE
-# ---------------------------
-
-@app.route('/api/live_votes')
-def api_live_votes():
-    votes = get_all_votes(DBV_PATH)
-    
-    candidate_names = ["Mian Ali Raza", "Ayesha Khan", "Farooq Siddiqui", "Sadaf Rehman"]
-    decrypted_sums = [0] * len(candidate_names)
-
-    for candidate, bfv in votes:
-        try:
-            vote_vec = decrypt_vote(bfv_ctx, bfv) if bfv else [1 if candidate_names[i] == candidate else 0 for i in range(4)]
-            for i in range(4):
-                decrypted_sums[i] += vote_vec[i]
-        except Exception as e:
-            print("Decryption error:", e)
-
-    return {"candidates": candidate_names, "votes": decrypted_sums}
-"""
-
-"""@app.route('/results', methods=['GET', 'POST'])
-def results():
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute("SELECT bfv_cipher FROM votes")
-    encrypted_votes = [row[0] for row in c.fetchall()]
-    conn.close()
-
-    if not encrypted_votes:
-        return "No votes yet"
-
-    if request.method == 'POST':
-        # Receive partial decryptions from agents
-        partials = request.form.getlist("partial")
-        final_sum = combine_shares(partials)
-        return render_template("results.html", tally=final_sum)
-
-    return render_template("results.html", tally=None, encrypted_votes=encrypted_votes)"""
-
-
 # ---------------------------
 # VOTER NAME + CNIC VALIDATION
 # ---------------------------
@@ -202,7 +160,7 @@ def voter_validation():
         session['voter_name'] = name
         session['voter_cnic'] = cnic
         session['face_verified'] = True
-        return redirect(url_for('verify_face'))
+        return redirect(url_for('verify_face_page'))
     else:
         return render_template("voter_verify.html", error="Voter not found in NADRA database.")
 
@@ -210,7 +168,7 @@ def voter_validation():
 # FACE VERIFICATION PAGE
 # ---------------------------
 @app.route('/verify_face')
-def verify_face(cnic, frame):
+def verify_face_page():
     if 'voter_cnic' not in session:
         flash("Please verify voter information first.")
         return redirect(url_for('voter_validation'))
@@ -306,64 +264,6 @@ def vote_page():
 
     return render_template('vote.html')
 
-
-
-"""
-# ---------------------------
-# SUBMIT VOTE
-# ---------------------------
-@app.route('/submit_vote', methods=['POST'])
-def submit_vote():
-    if not session.get('face_verified'):
-        return "Error: Face not verified.", 403
-    
-    cnic = session.get("voter_cnic")
-
-    # ⭐ Block double voting
-    if has_voted(cnic):
-        return "Error: This voter has already cast a vote.", 403
-
-    candidate = request.form.get("candidate")
-    if candidate is None:
-        return "No candidate selected", 400
-
-    cnic = session.get("voter_cnic")
-
-    candidate_names = ["Mian Ali Raza", "Ayesha Khan", "Farooq Siddiqui", "Sadaf Rehman"]
-    try:
-        candidate_index = int(candidate)
-        vote_vec = [0] * len(candidate_names)
-        vote_vec[candidate_index] = 1
-    except ValueError:
-        return "Invalid candidate", 400
-
-    # ---- ENCRYPTION & SIGNATURE ----
-    enc_bytes = encrypt_vote(bfv_ctx, vote_vec)
-
-    # Load voter's Dilithium keys from DB
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute("SELECT dilithium_privkey, dilithium_pubkey FROM voters WHERE cnic=?", (cnic,))
-    row = c.fetchone()
-    if not row:
-        conn.close()
-        return "Voter not found", 404
-    privkey, pubkey = row
-
-    sig = sign_bytes(privkey, enc_bytes)
-    receipt = receipt_hash(enc_bytes, sig)
-    print(os.path.exists(os.path.join(BASE_DIR, 'static', 'style.css')))
-    print("Receipt:", receipt)
-
-    # ---- STORE VOTE ----
-    c.execute('''INSERT INTO votes (voter_cnic, bfv_cipher, signature, receipt_hash)
-                 VALUES (?, ?, ?, ?)''',
-              (cnic, sqlite3.Binary(enc_bytes), sqlite3.Binary(sig), receipt))
-    conn.commit()
-    conn.close()
-
-    return render_template("receipt.html", receipt_hash=receipt)
-"""
 candidate_names = ["Mian Ali Raza", "Ayesha Khan", "Farooq Siddiqui", "Sadaf Rehman"]
 
 # ---------------------------
@@ -430,75 +330,11 @@ def index():
     return redirect(url_for('agent_login'))
  
 
-# ---------------------------
-# THRESHOLD UI ROUTES
-# ---------------------------
-
-# Store shares temporarily (RAM only)
-"""threshold_shares = {"agent1": None, "agent2": None}
-
-@app.route('/threshold', methods=['GET'])
-def threshold_home():
-    return render_template(
-        'threshold.html',
-        a1=threshold_shares["agent1"] is not None,
-        a2=threshold_shares["agent2"] is not None
-    )
-
-@app.route('/submit_agent_share', methods=['POST'])
-def submit_agent_share():
-    agent = request.form.get('agent')  # agent1 or agent2
-    share = request.form.get('share')
-
-    if agent not in ["agent1", "agent2"]:
-        return "Invalid agent!", 400
-
-    threshold_shares[agent] = share  # store in memory
-
-    flash(f"Share received from {agent}.")
-    return redirect(url_for('threshold_home'))
-
-@app.route('/decrypt_tally', methods=['POST'])
-def decrypt_tally():
-    # Check that both shares exist
-    if not threshold_shares["agent1"] or not threshold_shares["agent2"]:
-        flash("Both agent shares are required!")
-        return redirect(url_for('threshold_home'))
-
-    # Reconstruct secret key
-    combined_hex = combine_shares([threshold_shares["agent1"], threshold_shares["agent2"]])
-    recovered_bytes = bytes.fromhex(combined_hex)
-    recovered_ctx = ts.context_from(recovered_bytes)
-
-    # Decrypt all votes
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute("SELECT bfv_cipher FROM votes")
-    votes = c.fetchall()
-
-    tally = [0, 0, 0, 0]  # four candidates
-    for (enc,) in votes:
-        vec = decrypt_vote(recovered_ctx, enc)
-        for i in range(len(vec)):
-            tally[i] += vec[i]
-
-    conn.close()
-
-    # Clear shares after decrypt
-    threshold_shares["agent1"] = None
-    threshold_shares["agent2"] = None
-
-    return render_template("tally.html", tally=tally)"""
-
-
 @app.after_request
 def add_security_headers(response):
     response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
     response.headers["Pragma"] = "no-cache"
     response.headers["Expires"] = "0"
     return response
-
-
-
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
