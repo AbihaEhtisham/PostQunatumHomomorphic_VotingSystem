@@ -8,7 +8,7 @@ import json
 import bcrypt
 import numpy as np
 from polling_ui.face_model import verify_face
-from polling_ui.vote_manager import init_votes_db
+from polling_ui.vote_manager import init_votes_db, save_vote, get_all_votes
 from polling_ui.bfv import encrypt_vote, load_or_create_bfv_context, decrypt_vote
 from polling_ui.dilithium import sign_bytes, receipt_hash, generate_keys
 from polling_ui.threshold import combine_shares
@@ -20,7 +20,7 @@ import tenseal as ts
 print(os.path.exists(os.path.join(BASE_DIR, 'templates', 'receipt.html')))
 
 
-from polling_ui.vote_manager import init_votes_db, save_vote, get_all_votes
+
 DBV_PATH = os.path.join(BASE_DIR, "votes.db")
 init_votes_db(DBV_PATH)
 
@@ -32,7 +32,7 @@ bfv_ctx = load_or_create_bfv_context()
 
 DB_PATH = os.path.join(BASE_DIR, 'voters.db')
 NADRA_DB_PATH = os.path.join(BASE_DIR, 'nadra.db')
-init_votes_db()
+
 
 # ---- DB helpers ----
 
@@ -202,16 +202,15 @@ def voter_validation():
         session['voter_name'] = name
         session['voter_cnic'] = cnic
         session['face_verified'] = True
-        return redirect(url_for('vote_page'))
+        return redirect(url_for('verify_face'))
     else:
         return render_template("voter_verify.html", error="Voter not found in NADRA database.")
-
 
 # ---------------------------
 # FACE VERIFICATION PAGE
 # ---------------------------
 @app.route('/verify_face')
-def verify_face_page():
+def verify_face(cnic, frame):
     if 'voter_cnic' not in session:
         flash("Please verify voter information first.")
         return redirect(url_for('voter_validation'))
@@ -284,12 +283,11 @@ def verify_face_stream():
             return jsonify({"status": "unverified"}), 200
 
     except Exception as e:
-        # Catch *all* DeepFace / OpenCV weirdness, never crash
+        # Catch all DeepFace / OpenCV weirdness, never crash
         print("Face error:", e)
         return jsonify({"status": "error", "message": "Internal error during face verification."}), 200
-
 # ---------------------------
-# VOTING PAGE
+# PREVENATIVE-DV-VOTING PAGE
 # ---------------------------
 @app.route('/vote')
 def vote_page():
@@ -307,6 +305,8 @@ def vote_page():
         return render_template('voting_closed.html')
 
     return render_template('vote.html')
+
+
 
 """
 # ---------------------------
