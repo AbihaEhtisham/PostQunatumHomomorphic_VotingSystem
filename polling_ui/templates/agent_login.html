@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Polling Station</title>
+    <title>Polling Station 1</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/agent.css') }}">
 </head>
 
@@ -14,7 +14,7 @@
 
     <!-- Login Box -->
     <div class="login-container" id="loginBox" style="display: none;">
-        <h2>Agent Login</h2>
+        <h2>Authentication</h2>
 
         <!-- FLASH MESSAGES -->
         {% with messages = get_flashed_messages() %}
@@ -27,15 +27,15 @@
 
        <form method="POST" action="{{ url_for('agent_login') }}" autocomplete="off">
     <input type="text" name="station_id" placeholder="ID" required>
-    <input type="password" name="agent_key" placeholder="Password" required>
-    <button type="submit">Login</button>
+    <input type="password" name="agent_key" placeholder="Agent Key" required>
+    <button type="submit">Authenticate</button>
 </form>
 
     </div>
 
 <script>
     const votingTime = new Date();
-    votingTime.setHours(11, 44, 0, 0); // Example: 12:20 AM
+    votingTime.setHours(17, 29, 0, 0); // Example: 12:20 AM
 
     const timerEl = document.getElementById("timer");
     const votingStartEl = document.getElementById("votingStart");
@@ -48,7 +48,7 @@
         if (diff <= 0) {
             votingStartEl.style.display = 'none';
             timerEl.style.display = 'none';
-            loginBox.style.display = 'block';   // SHOW LOGIN
+            loginBox.style.display = 'block';   
             clearInterval(interval);
             return;
         }

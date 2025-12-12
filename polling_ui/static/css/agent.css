@@ -1,85 +1,155 @@
-/* Full page layout */
+/* Black background, white card, green accent - centered large login container */
+
+/* --- Base --- */
+:root{
+  --green-deep: #1C5D34;
+  --green-soft: #4B8F63;
+  --bg: #000000;          /* black background */
+  --card: #ffffff;        /* white card */
+  --muted: #bdbdbd;
+}
+
+* { box-sizing: border-box; }
+
+html,body {
+  height: 100%;
+  margin: 0;
+  font-family: "Segoe UI", Roboto, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--card);
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}
+
+/* --- Centering wrapper --- */
 body {
-    margin: 0;
-    padding: 0;
-    height: 100vh;
-    background: #000; /* changed to black */
-    font-family: Arial, sans-serif;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
 }
 
-/* Voting start text */
-#votingStart {
-    font-size: 48px;
-    font-weight: bold;
-    color: #ffd700; /* golden for contrast */
-    margin-bottom: 20px;
-    text-align: center;
-}
-
-/* Countdown timer */
-#timer {
-    font-size: 36px;
-    font-weight: bold;
-    color: #fff;
-    margin-bottom: 40px;
-}
-
-/* Authentication box */
+/* --- Enlarged login container --- */
 .login-container {
-    display: none; /* hidden until voting time */
-    background: #111; /* dark grey for contrast */
-    padding: 50px 60px; /* increased size */
-    border-radius: 12px;
-    text-align: center;
-    width: 400px; /* wider */
-    box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+  width: 100%;
+  max-width: 640px;        /* enlarged */
+  background: var(--card); /* white */
+  color: #111;
+  border-radius: 14px;
+  padding: 32px 36px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+  border-left: 8px solid var(--green-deep); /* green accent */
+  transform: translateY(0);
 }
 
+/* small screen tweak */
+@media (max-width: 480px){
+  .login-container { padding: 20px; max-width: 92%; border-left-width: 6px; }
+}
+
+/* --- Heading --- */
 .login-container h2 {
-    color: #ffd700; /* golden header */
-    margin-bottom: 25px;
-    font-size: 28px; /* larger */
+  margin: 0 0 16px 0;
+  font-size: 24px;
+  letter-spacing: 0.2px;
+  color: var(--green-deep);
+  font-weight: 700;
+  text-align: center;
 }
 
-/* Inputs */
-input[type="text"], input[type="password"] {
-    width: 100%;
-    padding: 14px;
-    margin-bottom: 20px;
-    border-radius: 6px;
-    border: none;
-    font-size: 18px;
-    background: #222;
-    color: #fff;
+/* --- Countdown texts (kept from your HTML) --- */
+#votingStart {
+  display: block;
+  margin-bottom: 10px;
+  color: var(--card);
+  font-weight: 600;
+  text-align: center;
+  font-size: 18px;
 }
 
-/* Disable browser autofill styles */
-input[type="text"]:-webkit-autofill,
-input[type="password"]:-webkit-autofill {
-    -webkit-box-shadow: 0 0 0px 1000px #222 inset;
-    -webkit-text-fill-color: white;
+#timer {
+  display: block;
+  margin-bottom: 18px;
+  color: var(--muted);
+  text-align: center;
+  font-size: 15px;
 }
 
-/* Button */
-button {
-    width: 100%;
-    padding: 14px;
-    background: #ffd700;
-    color: #000;
-    border: none;
-    border-radius: 8px;
-    font-size: 18px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.3s ease;
+/* --- Form inputs --- */
+.login-container form {
+  margin-top: 6px;
 }
 
-button:hover {
-    background: #ffc107;
-    transform: scale(1.05);
+.login-container input[type="text"],
+.login-container input[type="password"],
+.login-container input[type="number"] {
+  width: 100%;
+  padding: 14px 14px;
+  margin: 10px 0;
+  border-radius: 10px;
+  border: 1px solid #e6e6e6;
+  background: #fbfbfb;
+  font-size: 16px;
+  color: #111;
+  transition: box-shadow .15s ease, border-color .15s ease;
+}
+
+.login-container input:focus {
+  outline: none;
+  border-color: var(--green-soft);
+  box-shadow: 0 6px 18px rgba(76,143,99,0.12);
+}
+
+/* --- Button --- */
+.login-container button {
+  width: 100%;
+  padding: 14px;
+  margin-top: 12px;
+  border-radius: 10px;
+  border: none;
+  font-size: 17px;
+  cursor: pointer;
+  color: #fff;
+  background: linear-gradient(180deg, var(--green-deep), #144727);
+  box-shadow: 0 8px 18px rgba(28,93,52,0.18);
+  transition: transform .08s ease, box-shadow .12s ease;
+}
+
+.login-container button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(28,93,52,0.22);
+}
+
+/* --- Flash message (error) --- */
+.flash-msg {
+  background: #fff0f0;
+  color: #b30000;
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  border: 1px solid #ffd6d6;
+  text-align: center;
+  font-weight: 600;
+}
+
+/* --- Minimal forms of accessibility --- */
+.login-container input::placeholder { color: #9aa19a; }
+.login-container button:active { transform: translateY(0); }
+
+/* --- A subtle green decorative stripe at top (optional) --- */
+.login-container::before{
+  content: "";
+  display: block;
+  height: 6px;
+  width: 100%;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+  background: linear-gradient(90deg,var(--green-soft),var(--green-deep));
+  margin: -32px 0 18px 0; /* positions it flush with the card top */
+  box-shadow: 0 6px 18px rgba(28,93,52,0.08);
+}
+
+/* on very small screens hide the top stripe to save space */
+@media (max-width: 420px) {
+  .login-container::before { display: none; margin: 0; }
 }

@@ -99,7 +99,7 @@ def agent_login():
             # SUCCESS → redirect to face recognition page
             return redirect(url_for("voter_validation"))
         else:
-            flash("Wrong password!")
+            flash("Authentication Denied!")
             return redirect(url_for("agent_login"))
 
     return render_template("agent_login.html")
