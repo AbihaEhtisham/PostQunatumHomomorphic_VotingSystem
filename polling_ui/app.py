@@ -7,7 +7,7 @@ import cv2
 import json
 import bcrypt
 import numpy as np
-from polling_ui.face_model import verify_face
+from polling_ui.face_model import verify_face as verify_face_model
 from polling_ui.vote_manager import init_votes_db, save_vote, get_all_votes
 from polling_ui.bfv import encrypt_vote, load_or_create_bfv_context, decrypt_vote
 from polling_ui.dilithium import sign_bytes, receipt_hash, generate_keys
@@ -37,12 +37,12 @@ NADRA_DB_PATH = os.path.join(BASE_DIR, 'nadra.db')
 # ---- DB helpers ----
 
 def has_voted(cnic):
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DBV_PATH)
     c = conn.cursor()
-    c.execute("SELECT 1 FROM votes WHERE voter_cnic=? LIMIT 1", (cnic,))
-    result = c.fetchone()
+    c.execute("SELECT 1 FROM votes WHERE cnic=? LIMIT 1", (cnic,))
+    found = c.fetchone() is not None
     conn.close()
-    return result is not None
+    return found
 
 def init_db():
     conn = sqlite3.connect(DB_PATH)
@@ -99,7 +99,7 @@ def agent_login():
             # SUCCESS → redirect to face recognition page
             return redirect(url_for("voter_validation"))
         else:
-            flash("Wrong password!")
+            flash("Authentication Denied.")
             return redirect(url_for("agent_login"))
 
     return render_template("agent_login.html")
@@ -159,7 +159,7 @@ def voter_validation():
     if voter:
         session['voter_name'] = name
         session['voter_cnic'] = cnic
-        session['face_verified'] = True
+        session['face_verified'] = False
         return redirect(url_for('verify_face_page'))
     else:
         return render_template("voter_verify.html", error="Voter not found in NADRA database.")
@@ -212,10 +212,10 @@ def verify_face_stream():
             print("Face error: could not decode frame")
             return jsonify({"status": "error", "message": "Image decode failed"}), 200
 
-        ok = verify_face(cnic, frame)
-
+        ok = verify_face_model(cnic, frame)
         if ok:
             session['face_verified'] = True
+            session.modified = True
             conn = sqlite3.connect(DB_PATH)
             
             c = conn.cursor()
