@@ -4,16 +4,8 @@ from deepface import DeepFace # or you can use facenet-pytorch / arcface
 import os
 import pickle
 
-import os
-
-# Base directory of your project (where app.py lives)
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
 # Path to store face embeddings for voters
 FACE_DB_FILE = 'face_db.pkl'
-# Absolute path to NADRA database
-NADRA_DB_PATH = os.path.join(BASE_DIR, 'nadra.db')
-
 
 # Load existing embeddings
 if os.path.exists(FACE_DB_FILE):
@@ -71,4 +63,4 @@ def register_face(cnic, frame):
     embedding = DeepFace.represent(img_path=frame, model_name="ArcFace", enforce_detection=True)[0]["embedding"]
     face_db[cnic] = embedding
     with open(FACE_DB_FILE, 'wb') as f:
-        pickle.dump(face_db, f)
+        pickle.dump(face_db,f)

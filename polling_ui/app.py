@@ -35,6 +35,15 @@ NADRA_DB_PATH = os.path.join(BASE_DIR, 'nadra.db')
 init_votes_db()
 
 # ---- DB helpers ----
+
+def has_voted(cnic):
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("SELECT 1 FROM votes WHERE voter_cnic=? LIMIT 1", (cnic,))
+    result = c.fetchone()
+    conn.close()
+    return result is not None
+
 def init_db():
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
@@ -250,8 +259,8 @@ def verify_face_stream():
 
         if ok:
             session['face_verified'] = True
-
-            conn = sqlite3.connect('voters.db')
+            conn = sqlite3.connect(DB_PATH)
+            
             c = conn.cursor()
 
             # If voter not already in voters.db → insert and generate keys
@@ -288,6 +297,12 @@ def vote_page():
         flash("Face verification required.")
         return redirect(url_for('voter_validation'))
 
+    cnic = session.get('voter_cnic')
+
+    #  Prevent already-voted voters
+    if has_voted(cnic):
+        return render_template("already_voted.html", cnic=cnic)
+
     if not is_voting_open():
         return render_template('voting_closed.html')
 
@@ -301,6 +316,12 @@ def vote_page():
 def submit_vote():
     if not session.get('face_verified'):
         return "Error: Face not verified.", 403
+    
+    cnic = session.get("voter_cnic")
+
+    # ⭐ Block double voting
+    if has_voted(cnic):
+        return "Error: This voter has already cast a vote.", 403
 
     candidate = request.form.get("candidate")
     if candidate is None:
@@ -468,6 +489,15 @@ def decrypt_tally():
     threshold_shares["agent2"] = None
 
     return render_template("tally.html", tally=tally)"""
+
+
+@app.after_request
+def add_security_headers(response):
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
+
 
 
 if __name__ == '__main__':
