@@ -4,78 +4,103 @@
     <meta charset="UTF-8">
     <title>Voting 2025</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-</head>
-<body class="bg-gray-100">
 
-    <!-- Header -->
-    <header class="bg-blue-600 text-white p-4 flex justify-between items-center">
+    <style>
+        /* Simple ballot animation */
+        .ballot {
+            animation: drop 2.2s infinite;
+        }
+
+        @keyframes drop {
+            0%   { transform: translateY(-60px); opacity: 0; }
+            40%  { opacity: 1; }
+            60%  { transform: translateY(0px); }
+            80%  { transform: translateY(5px); }
+            100% { transform: translateY(0px); }
+        }
+    </style>
+</head>
+
+<body class="bg-white text-gray-900">
+
+    <!-- HEADER -->
+    <header class="bg-black text-white p-5 flex justify-between items-center shadow-lg">
         <div>
-            <h1 class="text-xl font-bold"> Voting 2025</h1>
-            <p>📞 +92-300-1234567 | ✉️ azka.voting@gmail.com</p>
+            <h1 class="text-2xl font-bold text-green-400">Public Voting Portal 2025</h1>
+            <p class="text-sm opacity-80">📞 +92-322-0790905 | ✉️ informationSecurity@seecs.edu.pk</p>
         </div>
-        <div id="clock" class="text-lg font-mono"></div>
+        <div id="clock" class="text-lg font-mono text-green-400"></div>
     </header>
 
-    <!-- Pre-voting display -->
-    <div id="preVoting" class="text-center mt-10">
-        <h2 class="text-2xl font-bold">Voting starts at 10:00 AM PST</h2>
-        <p class="mt-4">Location: Voting Portal</p>
+    <!-- BEFORE VOTING STARTS -->
+    <div id="preVoting" class="text-center mt-16">
+        <h2 class="text-3xl font-bold text-black">Voting starts at 10:00 AM PST</h2>
+        <p class="mt-4 text-gray-600">Please return once voting begins.</p>
     </div>
 
-    <!-- Live voting display -->
-    <div id="liveVoting" class="mt-10 px-10" style="display:none;">
-        <h2 class="text-2xl font-bold text-center mb-6">Live Vote Count</h2>
-        <p class="text-center text-3xl font-bold">Total Votes: <span id="vote-count">0</span></p>
+    <!-- LIVE VOTING DASHBOARD -->
+    <div id="liveVoting" class="hidden mt-14 flex flex-col items-center">
 
-        <!-- Verify Vote Button -->
-        <div class="flex justify-center mt-6">
-            <a href="{{ url_for('verify_vote') }}"
-               class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
-               Verify Vote
-            </a>
+        <!-- Ballot Animation -->
+        <div class="relative w-40 h-40 flex justify-center mb-4">
+            <!-- Ballot paper -->
+            <div class="ballot absolute w-16 h-20 bg-green-400 rounded shadow-lg"></div>
+
+            <!-- Ballot Box -->
+            <div class="absolute bottom-0 w-32 h-20 bg-gray-800 rounded-b-lg shadow-xl"></div>
+            <div class="absolute bottom-16 w-28 h-4 bg-gray-900 rounded-sm"></div>
         </div>
+
+        <!-- LIVE COUNT -->
+        <h2 class="text-3xl font-bold text-black mb-4">Live Vote Count</h2>
+        <p class="text-5xl font-extrabold text-green-600 drop-shadow-lg">
+            <span id="vote-count">0</span>
+        </p>
+
+        <!-- VERIFY VOTE BUTTON -->
+        <a href="{{ url_for('verify_vote') }}"
+           class="mt-8 bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg text-lg font-bold shadow-lg transition">
+            Verify My Vote
+        </a>
     </div>
 
+    <!-- SCRIPT -->
     <script>
         const votingHour = 10;
         const votingMinute = 0;
 
-        // Update the clock and toggle pre-voting/live-voting sections
         function updateClockAndVoting() {
             const now = new Date();
-            const options = { hour: '2-digit', minute: '2-digit', second: '2-digit' };
-            document.getElementById('clock').innerText = now.toLocaleTimeString('en-US', options);
+            document.getElementById('clock').innerText =
+                now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-            const votingStarted = (now.getHours() > votingHour) || 
-                                  (now.getHours() === votingHour && now.getMinutes() >= votingMinute);
+            const started = (now.getHours() > votingHour) ||
+                            (now.getHours() === votingHour && now.getMinutes() >= votingMinute);
 
-            document.getElementById('preVoting').style.display = votingStarted ? 'none' : 'block';
-            document.getElementById('liveVoting').style.display = votingStarted ? 'block' : 'none';
+            document.getElementById('preVoting').style.display = started ? 'none' : 'block';
+            document.getElementById('liveVoting').style.display = started ? 'flex' : 'none';
         }
 
-        // Fetch votes from API and update the vote count
         async function loadVotes() {
             try {
                 const response = await fetch("/api/live_votes");
-                if (!response.ok) {
-                    console.error("HTTP error:", response.status);
-                    return;
-                }
+                if (!response.ok) return;
+
                 const data = await response.json();
                 document.getElementById("vote-count").textContent = data.total_votes_cast;
             } catch (err) {
-                console.error("Error fetching live votes:", err);
+                console.error("Error fetching votes:", err);
             }
         }
 
-        // Initialize clock and live votes update
         function initDashboard() {
             updateClockAndVoting();
-            loadVotes(); // Initial load
+            loadVotes();
+
             setInterval(() => {
                 updateClockAndVoting();
                 loadVotes();
-            }, 5000); // Refresh every 5 seconds
+            }, 5000);
         }
 
         window.onload = initDashboard;
@@ -83,3 +108,4 @@
 
 </body>
 </html>
+
