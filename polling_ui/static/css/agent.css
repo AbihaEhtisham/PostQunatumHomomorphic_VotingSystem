@@ -153,3 +153,22 @@ body {
 @media (max-width: 420px) {
   .login-container::before { display: none; margin: 0; }
 }
+/* Countdown layout */
+.countdown-wrapper {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+#votingStart {
+  display: block;
+  font-size: 18px;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 8px;   /* 👈 separation */
+}
+
+#timer {
+  display: block;
+  font-size: 15px;
+  color: #bdbdbd;
+}

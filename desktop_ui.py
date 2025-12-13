@@ -23,9 +23,9 @@ if __name__ == "__main__":
     webview.create_window(
         "Polling UI",                   # Window title
         "http://127.0.0.1:5000",        # URL of your Flask app
-        #fullscreen=True, 
-         height=800,
-         width=1200,           # Open in fullscreen
+        fullscreen=True, 
+         #height=800,
+         #width=1200,           # Open in fullscreen
         resizable=False # Allow resizing
     )
 

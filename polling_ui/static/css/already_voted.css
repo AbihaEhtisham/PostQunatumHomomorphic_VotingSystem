@@ -1,52 +1,97 @@
-/* Override agent.css hiding rules */
-.login-container {
-    display: block !important;
+/* --- Theme variables (match main theme) --- */
+:root{
+  --green-deep: #1C5D34;
+  --green-soft: #4B8F63;
+  --bg: #000000;
+  --card: #ffffff;
+  --muted: #6f6f6f;
 }
 
-/* Page layout */
+/* --- Base layout --- */
+* { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: "Segoe UI", Roboto, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--card);
+}
+
+/* --- Center page --- */
 body {
-    margin: 0;
-    padding: 0;
-    height: 100vh;
-    background: #000;
-    font-family: Arial, sans-serif;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 32px;
 }
 
-/* Card styling */
+/* --- Card container (aligned with login theme) --- */
 .login-container {
-    background: #111;
-    padding: 50px 60px;
-    border-radius: 12px;
-    text-align: center;
-    width: 420px;
-    box-shadow: 0 0 20px rgba(255, 0, 0, 0.6);
+  display: block !important; /* override agent.css */
+  width: 100%;
+  max-width: 520px;
+  background: var(--card);
+  color: #111;
+  padding: 36px 40px;
+  border-radius: 14px;
+  text-align: center;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+  border-left: 8px solid var(--green-deep);
 }
 
+/* --- Heading --- */
 .login-box h2 {
-    color: #ff5555;
-    margin-bottom: 20px;
+  margin: 0 0 14px 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--green-deep);
 }
 
+/* --- Text --- */
 .login-box p {
-    font-size: 18px;
-    margin-bottom: 25px;
+  font-size: 16px;
+  color: var(--muted);
+  margin-bottom: 26px;
+  line-height: 1.5;
 }
 
-/* Button */
+/* --- Primary action button --- */
 .btn {
-    display: inline-block;
-    padding: 12px 20px;
-    background: #ffd700;
-    color: #000;
-    border-radius: 8px;
-    text-decoration: none;
-    font-weight: bold;
+  display: inline-block;
+  padding: 14px 26px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, var(--green-deep), #144727);
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 16px;
+  box-shadow: 0 8px 18px rgba(28,93,52,0.18);
+  transition: transform .1s ease, box-shadow .12s ease;
 }
 
 .btn:hover {
-    background: #ffc107;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(28,93,52,0.22);
 }
+
+/* --- Decorative top stripe (consistent with main card) --- */
+.login-container::before{
+  content: "";
+  display: block;
+  height: 6px;
+  width: 100%;
+  background: linear-gradient(90deg,var(--green-soft),var(--green-deep));
+  border-radius: 8px 8px 0 0;
+  margin: -36px 0 22px 0;
+}
+
+/* --- Mobile tweaks --- */
+@media (max-width: 480px){
+  .login-container {
+    padding: 24px;
+    max-width: 94%;
+    border-left-width: 6px;
+  }
+}
+
