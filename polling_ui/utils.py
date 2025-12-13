@@ -1,6 +1,6 @@
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # Get the directory where THIS utils.py file exists
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -17,7 +17,7 @@ def is_voting_open():
     start = datetime.fromisoformat(cfg['start_time'])
     end = datetime.fromisoformat(cfg['end_time'])
     now = datetime.now()
-
+    start = start - timedelta(hours=5)
     return start <= now <= end
 
 

@@ -6,8 +6,10 @@ from dilithium_py.dilithium import Dilithium2
 # --- Dilithium Keygen ---
 def generate_keys():
     pk, sk = Dilithium2.keygen()
-    return pk, sk
+    return sk, pk
 
+sk, pk = generate_keys()
+print("SK len:", len(sk), "PK len:", len(pk))
 
 # --- Sign arbitrary data bytes ---
 def sign_bytes(sk, data_bytes):

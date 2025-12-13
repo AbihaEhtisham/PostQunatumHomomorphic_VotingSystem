@@ -13,20 +13,22 @@ def init_votes_db(db_path=DB_PATH):
     conn = sqlite3.connect(db_path)
     c = conn.cursor()
 
-    # Drop old table if exists
+    # Drop old table if exists (optional during development)
     c.execute("DROP TABLE IF EXISTS votes")
+
     c.execute("""
         CREATE TABLE IF NOT EXISTS votes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             cnic TEXT UNIQUE,
             candidate TEXT,
             bfv_cipher BLOB,
+            signature BLOB,
+            receipt_hash TEXT,
             timestamp TEXT
         )
     """)
     conn.commit()
     conn.close()
-
 
 # ---------------------------
 # CHECK IF CNIC ALREADY VOTED

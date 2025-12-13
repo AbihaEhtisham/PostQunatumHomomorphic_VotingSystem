@@ -1,11 +1,12 @@
+from datetime import datetime, timedelta
 import sys, os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
-from polling_ui.utils import BASE_DIR, verify_agent_key, is_voting_open
+from polling_ui.utils import BASE_DIR, CONFIG_FILE, verify_agent_key, is_voting_open
 import sqlite3
 import cv2
-import json
 import bcrypt
+import json
 import numpy as np
 from polling_ui.face_model import verify_face
 from polling_ui.vote_manager import init_votes_db
@@ -102,23 +103,18 @@ def agent_login():
             flash("Wrong password!")
             return redirect(url_for("agent_login"))
 
-    return render_template("agent_login.html")
+    # ---- GET request: read start_time from config ----
+    with open(CONFIG_FILE, 'r') as f:
+        cfg = json.load(f)
+
+    start_time = datetime.fromisoformat(cfg['start_time'])
+
+    # ---- optional: adjust for testing ----
+    # start_time = start_time - timedelta(hours=5)  # uncomment only if testing
+
+    return render_template("agent_login.html", start_time=start_time.strftime("%I:%M %p"))
 
 
-@app.route('/verify_vote', methods=['GET', 'POST'])
-def verify_vote():
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute("SELECT receipt_hash FROM votes")
-    all_receipts = [row[0] for row in c.fetchall()]
-    result = None
-
-    if request.method == 'POST':
-        search_hash = request.form.get('receipt_hash', '').strip()
-        result = search_hash in all_receipts
-
-    conn.close()
-    return render_template('voter_verify.html', result=result, all_receipts=all_receipts)
 
 from polling_ui.threshold import combine_shares
 
@@ -201,8 +197,7 @@ def voter_validation():
     if voter:
         session['voter_name'] = name
         session['voter_cnic'] = cnic
-        session['face_verified'] = True
-        return redirect(url_for('vote_page'))
+        return redirect(url_for('verify_face_page'))
     else:
         return render_template("voter_verify.html", error="Voter not found in NADRA database.")
 
@@ -374,11 +369,17 @@ def submit_vote():
     if not session.get('face_verified'):
         return "Error: Face not verified.", 403
 
+    cnic = session.get("voter_cnic")
+
+    # ⭐ Optional: Block double voting
+    if has_voted(cnic):
+        return "Error: This voter has already cast a vote.", 403
+
     candidate_index = request.form.get("candidate")
     if candidate_index is None:
         return "No candidate selected", 400
 
-    cnic = session.get("voter_cnic")
+    candidate_names = ["Mian Ali Raza", "Ayesha Khan", "Farooq Siddiqui", "Sadaf Rehman"]
     try:
         candidate_index = int(candidate_index)
         vote_vec = [0] * len(candidate_names)
@@ -389,13 +390,13 @@ def submit_vote():
     # ---- ENCRYPTION ----
     enc_bytes = encrypt_vote(bfv_ctx, vote_vec)
 
-    # ---- LOAD VOTER KEYS FROM NADRA_DB ----
+    # ---- LOAD VOTER KEYS FROM DB ----
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute("SELECT dilithium_privkey, dilithium_pubkey FROM voters WHERE cnic=?", (cnic,))
     row = c.fetchone()
-    conn.close()
     if not row:
+        conn.close()
         return "Voter not found", 404
     privkey, pubkey = row
 
@@ -404,12 +405,18 @@ def submit_vote():
     receipt = receipt_hash(enc_bytes, sig)
     print("Receipt:", receipt)
 
-    # ---- STORE VOTE IN VOTES.DB ----
-    save_vote(cnic, candidate_names[candidate_index], bfv_cipher=enc_bytes, db_path=DBV_PATH)
+    print("Submitting vote for CNIC:", cnic)
+    print("Encrypted vote bytes length:", len(enc_bytes))
+
+    # ---- STORE VOTE ----
+    c.execute('''INSERT INTO votes (voter_cnic, bfv_cipher, signature, receipt_hash)
+                 VALUES (?, ?, ?, ?)''',
+              (cnic, sqlite3.Binary(enc_bytes), sqlite3.Binary(sig), receipt))
+    conn.commit()
+    conn.close()
 
     # ---- RETURN RECEIPT ----
     return render_template("receipt.html", receipt_hash=receipt)
-
 
 # ---------------------------
 # LIVE VOTES API (Encrypted votes only)

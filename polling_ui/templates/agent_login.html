@@ -8,9 +8,9 @@
 
 <body>
 
-    <!-- Countdown Text -->
-    <div id="votingStart">Voting starts at 10:00 AM</div>
-    <div id="timer"></div>
+<!-- Countdown Text -->
+<div id="votingStart">Voting starts at {{ start_time }}</div>
+<div id="timer"></div>
 
     <!-- Login Box -->
     <div class="login-container" id="loginBox" style="display: none;">
@@ -34,12 +34,11 @@
     </div>
 
 <script>
-    const votingTime = new Date();
-    votingTime.setHours(11, 44, 0, 0); // Example: 12:20 AM
-
     const timerEl = document.getElementById("timer");
     const votingStartEl = document.getElementById("votingStart");
     const loginBox = document.getElementById("loginBox");
+    const votingTime = new Date();
+    votingTime.setHours(11, 44, 0, 0); // Example: 12:20 AM
 
     function updateCountdown() {
         const now = new Date();

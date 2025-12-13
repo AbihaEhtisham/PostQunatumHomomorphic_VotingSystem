@@ -11,7 +11,7 @@
     <h1 class="page-title">Voter Verification</h1>
 
     <div class="voter-container">
-        <form method="POST">
+        <form method="POST" action="{{ url_for('voter_validation') }}">
 
             <label for="name">Name</label>
             <input id="name" type="text" name="name" placeholder="Enter full name" required autocomplete="off">
