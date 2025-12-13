@@ -1,5 +1,3 @@
-let selected = null;
-
 const cards = document.querySelectorAll(".candidate-card");
 const submitBtn = document.getElementById("submitBtn");
 const selectedInput = document.getElementById("selected_candidate");

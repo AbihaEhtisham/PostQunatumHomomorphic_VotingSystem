@@ -25,14 +25,13 @@
             </div>
         {% endif %}
 
-        <h3>All Votes</h3>
         <ul>
             {% for r in all_receipts %}
                 <li><code>{{ r }}</code></li>
             {% endfor %}
         </ul>
 
-        <a class="btn" href="{{ url_for('agent_login') }}">Back to Login</a>
+        <a class="btn" href="{{ url_for('index') }}">Back</a>
     </div>
 </body>
 </html>

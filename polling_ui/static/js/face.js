@@ -77,6 +77,7 @@ async function captureAndVerify() {
     try {
         const response = await fetch("/verify_face_stream", {
             method: "POST",
+            credentials: "same-origin", // ✅ IMPORTANT: keeps Flask session cookie working
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ image: dataUrl })
         });
@@ -91,16 +92,14 @@ async function captureAndVerify() {
             clearInterval(verifyInterval);
             clearInterval(timerInterval);
 
-            // stop webcam stream
             if (video.srcObject) {
                 video.srcObject.getTracks().forEach(t => t.stop());
             }
 
             console.log("Redirecting to /vote …");
 
-            // More reliable redirection
             setTimeout(() => {
-                window.location.replace("/vote"); // BEST redirect method
+                window.location.replace("/vote");
             }, 1200);
 
         } else {
@@ -115,7 +114,6 @@ async function captureAndVerify() {
     }
 }
 
-// start camera on load
 window.onload = () => {
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         setStatus("Requesting camera access…", "info");

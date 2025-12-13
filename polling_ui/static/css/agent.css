@@ -1,85 +1,85 @@
-
+/* Full page layout */
 body {
     margin: 0;
     padding: 0;
-    font-family: "Segoe UI", Arial, sans-serif;
-    background: #0b1a33; /* Deep navy */
-    background: linear-gradient(145deg, #0b1a33, #081322, #0f1f3f);
-}
-
-
-/* Centering container */
-.login-container {
+    height: 100vh;
+    background: #000; /* changed to black */
+    font-family: Arial, sans-serif;
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+    flex-direction: column;
+    color: #fff;
 }
 
-/* Card box */
-.login-box {
-    width: 380px;
-    background: #ffffff;
-    padding: 30px 40px;
-    border-radius: 8px;
-    border-top: 6px solid #003399; /* Official navy blue */
-    .login-box {
-    box-shadow: 0 0 25px rgba(0,0,0,0.4);
-}
-
-}
-
-/* Title */
-.login-box h2 {
-    margin-bottom: 25px;
+/* Voting start text */
+#votingStart {
+    font-size: 48px;
+    font-weight: bold;
+    color: #ffd700; /* golden for contrast */
+    margin-bottom: 20px;
     text-align: center;
-    color: #003399;
-    font-size: 22px;
-    letter-spacing: 0.5px;
 }
 
-/* Labels */
-label {
-    font-size: 14px;
-    color: #333;
-    font-weight: 600;
+/* Countdown timer */
+#timer {
+    font-size: 36px;
+    font-weight: bold;
+    color: #fff;
+    margin-bottom: 40px;
+}
+
+/* Authentication box */
+.login-container {
+    display: none; /* hidden until voting time */
+    background: #111; /* dark grey for contrast */
+    padding: 50px 60px; /* increased size */
+    border-radius: 12px;
+    text-align: center;
+    width: 400px; /* wider */
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+}
+
+.login-container h2 {
+    color: #ffd700; /* golden header */
+    margin-bottom: 25px;
+    font-size: 28px; /* larger */
 }
 
 /* Inputs */
 input[type="text"], input[type="password"] {
     width: 100%;
-    padding: 10px;
-    margin: 8px 0 20px;
-    border: 1px solid #aaa;
-    border-radius: 5px;
-    font-size: 15px;
+    padding: 14px;
+    margin-bottom: 20px;
+    border-radius: 6px;
+    border: none;
+    font-size: 18px;
+    background: #222;
+    color: #fff;
+}
+
+/* Disable browser autofill styles */
+input[type="text"]:-webkit-autofill,
+input[type="password"]:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0px 1000px #222 inset;
+    -webkit-text-fill-color: white;
 }
 
 /* Button */
 button {
     width: 100%;
-    padding: 12px;
-    font-size: 16px;
-    background: #003399;
-    color: white;
+    padding: 14px;
+    background: #ffd700;
+    color: #000;
     border: none;
-    border-radius: 5px;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: bold;
     cursor: pointer;
-    font-weight: 600;
-    transition: 0.3s;
+    transition: all 0.3s ease;
 }
 
 button:hover {
-    background: #002266;
-}
-
-/* Error box */
-.error-box {
-    margin-top: 15px;
-    padding: 10px;
-    border-left: 4px solid red;
-    background: #ffe5e5;
-    color: #b30000;
-    font-size: 14px;
-    border-radius: 5px;
+    background: #ffc107;
+    transform: scale(1.05);
 }

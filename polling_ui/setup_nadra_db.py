@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS voters (
 
 sample_data = [
     ("Abiha Ehtisham", "35202-1234567-1", "placeholder"),
-    ("Azka Saqib", "35201-9876543-0", "placeholder"),
+    ("Azka Saqib", "35202-7848640-8", "placeholder"),
     ("Eman Fatima", "61101-4567890-2", "placeholder")
 ]
 
