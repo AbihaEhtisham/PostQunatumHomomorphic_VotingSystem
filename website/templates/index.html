@@ -7,60 +7,159 @@
 </head>
 <body class="bg-gray-100">
 
-    <!-- Header -->
     <header class="bg-blue-600 text-white p-4 flex justify-between items-center">
         <div>
-            <h1 class="text-xl font-bold"> Voting 2025</h1>
+            <h1 class="text-xl font-bold">Voting 2025</h1>
             <p>📞 +92-300-1234567 | ✉️ azka.voting@gmail.com</p>
         </div>
         <div id="clock" class="text-lg font-mono"></div>
     </header>
 
-    <!-- Pre-voting display -->
     <div id="preVoting" class="text-center mt-10">
-        <h2 class="text-2xl font-bold">Voting starts at 10:00 AM PST</h2>
+        <h2 class="text-2xl font-bold" id="preVotingText"></h2>
+        <p class="mt-4 text-xl font-semibold text-blue-700" id="countdownTimer"></p>
         <p class="mt-4">Location: Voting Portal</p>
     </div>
 
-    <!-- Live voting display -->
     <div id="liveVoting" class="mt-10 px-10" style="display:none;">
         <h2 class="text-2xl font-bold text-center mb-6">Live Vote Count</h2>
         <p class="text-center text-3xl font-bold">Total Votes: <span id="vote-count">0</span></p>
 
-        <!-- Verify Vote Button -->
         <div class="flex justify-center mt-6">
             <a href="{{ url_for('verify_vote') }}"
-               class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
-               Verify Vote
+                class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
+                Verify Vote
             </a>
         </div>
     </div>
 
-    <script>
-        const votingHour = 10;
-        const votingMinute = 0;
+    <div id="postVoting" class="text-center mt-10" style="display:none;">
+        <h2 class="text-2xl font-bold">Voting has ended</h2>
+        <p class="mt-4">Final results per candidate:</p>
+        <ul id="final-results" class="mt-4 text-left inline-block text-lg">
+            </ul>
+    </div>
 
-        // Update the clock and toggle pre-voting/live-voting sections
-        function updateClockAndVoting() {
-            const now = new Date();
-            const options = { hour: '2-digit', minute: '2-digit', second: '2-digit' };
-            document.getElementById('clock').innerText = now.toLocaleTimeString('en-US', options);
+    <script type="text/javascript">
+        // Elements
+        const preVotingEl = document.getElementById("preVoting");
+        const liveVotingEl = document.getElementById("liveVoting");
+        const postVotingEl = document.getElementById("postVoting");
+        const countdownEl = document.getElementById("countdownTimer");
+        const preVotingTextEl = document.getElementById("preVotingText");
+        const clockEl = document.getElementById("clock");
 
-            const votingStarted = (now.getHours() > votingHour) || 
-                                  (now.getHours() === votingHour && now.getMinutes() >= votingMinute);
+        // --- TIME LOGIC EXACTLY LIKE agent_login.html (Hour/Minute only) ---
+        // NOTE: This logic assumes the voting is scheduled for TODAY.
+        const startHour = parseInt("{{ start_hour }}", 10) || 0;
+        const startMinute = parseInt("{{ start_minute }}", 10) || 0;
+        const endHour = parseInt("{{ end_hour }}", 10) || 0;
+        const endMinute = parseInt("{{ end_minute }}", 10) || 0;
 
-            document.getElementById('preVoting').style.display = votingStarted ? 'none' : 'block';
-            document.getElementById('liveVoting').style.display = votingStarted ? 'block' : 'none';
+        // Create Date objects based on TODAY's date, setting only the hour/minute
+        const votingStart = new Date();
+        votingStart.setHours(startHour, startMinute, 0, 0);
+
+        const votingEnd = new Date();
+        votingEnd.setHours(endHour, endMinute, 0, 0);
+        
+        const candidateNames = ["Mian Ali Raza", "Ayesha Khan", "Farooq Siddiqui", "Sadaf Rehman"];
+        
+        let countdownInterval;
+        let dataInterval;
+
+        function formatTime(date) {
+             return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
         }
 
-        // Fetch votes from API and update the vote count
+        // --- COUNTDOWN LOGIC (runs every 1 second when pre-voting) ---
+        function updateCountdown() {
+            const now = new Date();
+            const diff = votingStart - now;
+
+            // Update the header clock every second
+            const clockOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit' };
+            clockEl.innerText = now.toLocaleTimeString('en-US', clockOptions);
+
+            if (diff <= 0) {
+                // Countdown is over, stop 1s timer and force status update
+                clearInterval(countdownInterval);
+                updateVotingStatus(true); 
+                return;
+            }
+
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+            countdownEl.textContent = `Remaining: ${hours}h ${minutes}m ${seconds}s`;
+        }
+
+        // --- MAIN STATUS CHECK (runs on load and every 5 seconds) ---
+        function updateVotingStatus() {
+            const now = new Date();
+            
+            const votingStarted = now >= votingStart;
+            const votingEnded = now >= votingEnd;
+            
+            // Update the header clock (in case the 1s timer isn't running)
+            const clockOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit' };
+            clockEl.innerText = now.toLocaleTimeString('en-US', clockOptions);
+            
+            // Update pre-voting display text
+            preVotingTextEl.innerText = `Voting starts at ${formatTime(votingStart)} PST`;
+
+            // Handle display logic
+            if (votingEnded) {
+                // STOP ALL UPDATES AND SHOW FINAL RESULTS
+                preVotingEl.style.display = 'none';
+                liveVotingEl.style.display = 'none';
+                postVotingEl.style.display = 'block';
+                
+                clearInterval(dataInterval);
+                loadFinalResults();
+                return;
+            }
+
+            if (votingStarted) {
+                // VOTING IS LIVE
+                preVotingEl.style.display = 'none';
+                liveVotingEl.style.display = 'block';
+                postVotingEl.style.display = 'none';
+                countdownEl.style.display = 'none';
+                
+                loadVotes(); // Load live votes
+                return;
+            } 
+            
+            // PRE-VOTING (Waiting for start)
+            preVotingEl.style.display = 'block';
+            liveVotingEl.style.display = 'none';
+            postVotingEl.style.display = 'none';
+            countdownEl.style.display = 'block';
+        }
+
+        // --- INITIALIZATION ---
+        function initDashboard() {
+            const now = new Date();
+            
+            if (now < votingStart) {
+                // Start 1-second countdown if pre-voting
+                updateCountdown(); 
+                countdownInterval = setInterval(updateCountdown, 1000);
+            }
+            
+            // Start the main 5-second status and data update loop
+            updateVotingStatus();
+            dataInterval = setInterval(updateVotingStatus, 5000);
+        }
+
+
+        // --- DATA FETCHING FUNCTIONS ---
         async function loadVotes() {
             try {
                 const response = await fetch("/api/live_votes");
-                if (!response.ok) {
-                    console.error("HTTP error:", response.status);
-                    return;
-                }
+                if (!response.ok) return;
                 const data = await response.json();
                 document.getElementById("vote-count").textContent = data.total_votes_cast;
             } catch (err) {
@@ -68,14 +167,21 @@
             }
         }
 
-        // Initialize clock and live votes update
-        function initDashboard() {
-            updateClockAndVoting();
-            loadVotes(); // Initial load
-            setInterval(() => {
-                updateClockAndVoting();
-                loadVotes();
-            }, 5000); // Refresh every 5 seconds
+        async function loadFinalResults() {
+            try {
+                const response = await fetch("/api/final_results"); 
+                if (!response.ok) return;
+                const data = await response.json();
+                const resultsList = document.getElementById("final-results");
+                resultsList.innerHTML = "";
+                candidateNames.forEach((name, idx) => {
+                    const li = document.createElement("li");
+                    li.textContent = `${name}: ${data[idx]} votes`;
+                    resultsList.appendChild(li);
+                });
+            } catch (err) {
+                console.error("Error fetching final results:", err);
+            }
         }
 
         window.onload = initDashboard;

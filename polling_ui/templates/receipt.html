@@ -1,15 +1,155 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Vote Receipt</title>
-    <link rel="stylesheet" href="/static/style.css">
+  <meta charset="UTF-8">
+  <title>Vote Receipt</title>
+
+  <style>
+    :root{
+      --green-deep: #1C5D34;
+      --green-soft: #4B8F63;
+      --bg: #000000;
+      --card: #ffffff;
+      --muted: #7a7a7a;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      font-family: "Segoe UI", Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--card);
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 32px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 620px;
+      background: var(--card);
+      color: #111;
+      padding: 32px 36px;
+      border-radius: 14px;
+      text-align: center;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+      border-left: 8px solid var(--green-deep);
+      overflow: hidden;
+    }
+
+    .container::before{
+      content: "";
+      display: block;
+      height: 6px;
+      background: linear-gradient(90deg,var(--green-soft),var(--green-deep));
+      border-radius: 8px 8px 0 0;
+      margin: -32px 0 20px 0;
+    }
+
+    h2 {
+      margin: 0 0 14px 0;
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--green-deep);
+    }
+
+    /* --- Printing animation --- */
+    .printing {
+      margin: 30px 0;
+    }
+
+    .printer {
+      font-size: 40px;
+      animation: bounce 1.2s infinite;
+    }
+
+    .print-text {
+      margin-top: 10px;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+
+    /* --- Receipt hash --- */
+    .receipt {
+      display: none;
+      animation: fadeIn 0.6s ease forwards;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    code {
+      display: block;
+      padding: 16px;
+      background: #f6f6f6;
+      border-radius: 10px;
+      font-size: 15px;
+      color: #222;
+      word-break: break-all;
+      border: 1px solid #e3e3e3;
+      margin: 12px 0 24px 0;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 14px 30px;
+      border-radius: 10px;
+      background: linear-gradient(180deg, var(--green-deep), #144727);
+      color: #fff;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 16px;
+      box-shadow: 0 8px 18px rgba(28,93,52,0.18);
+      transition: transform .1s ease, box-shadow .12s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 28px rgba(28,93,52,0.22);
+    }
+  </style>
 </head>
-<body style="background:#222; color:#fff;">
-    <div class="container">
-        <h2>Your Vote Receipt</h2>
-        <p>Keep this hash to verify your vote:</p>
-        <code>{{ receipt_hash }}</code><br><br>
-        <a class="btn" href="{{ url_for('voter_validation') }}">Back</a>
+
+<body>
+
+  <div class="container">
+    <h2>Vote Receipt</h2>
+
+    <!-- Printing animation -->
+    <div class="printing" id="printing">
+      <div class="printer">🖨️</div>
+      <div class="print-text">Printing receipt…</div>
     </div>
+
+    <!-- Receipt -->
+    <div class="receipt" id="receipt">
+      <strong>Verification Hash</strong>
+      <code>{{ receipt_hash }}</code>
+
+      <a class="btn" href="{{ url_for('voter_validation') }}">Back</a>
+    </div>
+  </div>
+
+  <script>
+    // Simulate printing delay
+    setTimeout(() => {
+      document.getElementById("printing").style.display = "none";
+      document.getElementById("receipt").style.display = "block";
+    }, 2500);
+  </script>
+
 </body>
 </html>

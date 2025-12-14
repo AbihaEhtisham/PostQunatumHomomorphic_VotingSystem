@@ -2,7 +2,12 @@
 <html>
 <head>
     <title>Already Voted</title>
+
+    <!-- Keep agent.css -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/agent.css') }}">
+
+    <!-- Add override -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/already_voted.css') }}">
 </head>
 <body>
 
@@ -10,11 +15,11 @@
     <div class="login-box">
         <h2>Voting Not Allowed</h2>
 
-        <p style="color:#ff7777; font-size:18px; font-weight:bold;">
+        <p>
             This CNIC ({{ cnic }}) has already cast a vote.
         </p>
 
-        <a href="{{ url_for('agent_login') }}" class="btn">Back to Login</a>
+        <a href="{{ url_for('voter_validation') }}" class="btn">Back</a>
     </div>
 </div>
 

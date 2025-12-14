@@ -9,8 +9,10 @@
 <body>
 
 <!-- Countdown Text -->
-<div id="votingStart">Voting starts at {{ start_time }}</div>
-<div id="timer"></div>
+<div class="countdown-wrapper">
+    <div id="votingStart" data-hour="{{ start_hour }}" data-minute="{{ start_minute }}">Voting starts at {{ start_time }}</div>
+    <div id="timer"></div>
+</div>
 
     <!-- Login Box -->
     <div class="login-container" id="loginBox" style="display: none;">
@@ -37,8 +39,12 @@
     const timerEl = document.getElementById("timer");
     const votingStartEl = document.getElementById("votingStart");
     const loginBox = document.getElementById("loginBox");
+
+    // Use Flask variables for start hour/minute (read from data attributes to avoid raw template syntax in JS)
     const votingTime = new Date();
-    votingTime.setHours(11, 44, 0, 0); // Example: 12:20 AM
+    const startHour = parseInt(votingStartEl.getAttribute('data-hour'), 10) || 0;
+    const startMinute = parseInt(votingStartEl.getAttribute('data-minute'), 10) || 0;
+    votingTime.setHours(startHour, startMinute, 0, 0);
 
     function updateCountdown() {
         const now = new Date();
@@ -62,6 +68,5 @@
     const interval = setInterval(updateCountdown, 1000);
     updateCountdown();
 </script>
-
 </body>
 </html>

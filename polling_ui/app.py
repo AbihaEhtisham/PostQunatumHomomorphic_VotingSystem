@@ -35,6 +35,29 @@ DB_PATH = os.path.join(BASE_DIR, 'voters.db')
 NADRA_DB_PATH = os.path.join(BASE_DIR, 'nadra.db')
 init_votes_db()
 
+
+# Function to check if voting has ended and redirect if necessary
+def check_voting_status():
+    with open(CONFIG_FILE, 'r') as f:
+        cfg = json.load(f)
+
+    end_time = datetime.fromisoformat(cfg['end_time'])
+    now = datetime.now()
+
+    # If the current time is past the end time AND the request is NOT already for the end page
+    if now >= end_time and request.path != url_for('voting_ended'):
+        return redirect(url_for('voting_ended'))
+
+# Apply the check to every request made to the Flask app
+@app.before_request
+def before_request_func():
+    return check_voting_status()
+
+# New route for the end page
+@app.route('/voting_ended')
+def voting_ended():
+    # This page confirms the application is finished
+    return render_template('voting_ended.html')
 # ---- DB helpers ----
 
 def has_voted(cnic):
@@ -82,6 +105,10 @@ AGENTS_FILE = os.path.join(BASE_DIR, "static", "agents.json")
 with open(AGENTS_FILE, "r") as f:
     AGENTS = json.load(f)
 
+import json
+from datetime import datetime
+
+CONFIG_FILE = "config.json"
 @app.route('/agent_login', methods=['GET', 'POST'])
 def agent_login():
     if request.method == 'POST':
@@ -108,12 +135,15 @@ def agent_login():
         cfg = json.load(f)
 
     start_time = datetime.fromisoformat(cfg['start_time'])
+    start_hour = start_time.hour
+    start_minute = start_time.minute
 
-    # ---- optional: adjust for testing ----
-    # start_time = start_time - timedelta(hours=5)  # uncomment only if testing
-
-    return render_template("agent_login.html", start_time=start_time.strftime("%I:%M %p"))
-
+    return render_template(
+        "agent_login.html", 
+        start_hour=start_hour,
+        start_minute=start_minute,
+        start_time=start_time.strftime("%I:%M %p")  # still keep for display
+    )
 
 
 from polling_ui.threshold import combine_shares
@@ -430,6 +460,18 @@ def api_live_votes():
 
     # Return only total votes, no candidate info
     return {"total_votes_cast": total_votes}
+
+@app.route('/api/final_results')
+def api_final_results():
+    votes = get_all_votes(DBV_PATH)  # fetch encrypted votes
+    candidate_totals = [0] * len(candidate_names)
+
+    for enc_vote_bytes in votes:
+        enc_vec = ts.bfv_vector_from(bfv_ctx, enc_vote_bytes)
+        for i in range(len(candidate_names)):
+            candidate_totals[i] += enc_vec[i]  
+    print("DEBUG: Final results:", candidate_totals) 
+    return jsonify(candidate_totals)
 
 
 @app.route('/')

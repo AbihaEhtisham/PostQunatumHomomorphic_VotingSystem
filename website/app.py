@@ -1,15 +1,49 @@
 from flask import Flask, render_template, jsonify
 import sqlite3
+import sys
 import os
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(os.path.join(BASE_DIR, "polling_ui"))  # add polling_ui folder
+
+from bfv import load_or_create_bfv_context
+
+bfv_ctx = load_or_create_bfv_context()
+
 
 app = Flask(__name__)
 
-# Correct DB path
-DB_PATH = os.path.abspath(r"../PostQunatumHomomorphic_VotingSystem/polling_ui/votes.db")
+# Path to votes.db in polling_ui folder
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DB_PATH = os.path.join(BASE_DIR, "polling_ui", "voters.db")
+
+import json
+from datetime import datetime
+
+CONFIG_FILE = "config.json"  # path relative to app.py
 
 @app.route('/')
 def index():
-    return render_template("index.html")
+    # Read config
+    with open(CONFIG_FILE, 'r') as f:
+        cfg = json.load(f)
+
+    start_time = datetime.fromisoformat(cfg['start_time'])
+    end_time = datetime.fromisoformat(cfg['end_time'])
+
+    start_hour = start_time.hour
+    start_minute = start_time.minute
+    end_hour = end_time.hour
+    end_minute = end_time.minute
+
+    return render_template(
+        "index.html",
+        start_hour=start_hour,
+        start_minute=start_minute,
+        end_hour=end_hour,
+        end_minute=end_minute
+    )
+
 
 @app.route('/verify_vote')
 def verify_vote():
@@ -24,6 +58,31 @@ def api_live_votes():
     conn.close()
 
     return jsonify({"total_votes_cast": total_votes})
+
+NUM_CANDIDATES = 4  # total candidates
+candidate_names = ["Mian Ali Raza", "Ayesha Khan", "Farooq Siddiqui", "Sadaf Rehman"]
+
+@app.route('/api/final_results')
+def api_final_results():
+    import tenseal as ts
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("SELECT bfv_cipher FROM votes")
+    votes = c.fetchall()
+    conn.close()
+
+    if not votes:
+        return jsonify([0, 0, 0, 0])
+
+    enc_sum = ts.bfv_vector_from(bfv_ctx, votes[0][0])
+
+    for v in votes[1:]:
+        enc_sum += ts.bfv_vector_from(bfv_ctx, v[0])
+
+    # ✅ NOW THIS WORKS
+    final_totals = enc_sum.decrypt()
+
+    return jsonify(final_totals)
 
 if __name__ == '__main__':
     app.run(debug=True, port=8000)

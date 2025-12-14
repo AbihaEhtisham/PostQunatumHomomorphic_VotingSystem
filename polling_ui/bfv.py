@@ -57,7 +57,7 @@ def load_or_create_bfv_context():
         ctx.generate_relin_keys()
         # Save WITHOUT secret key
         with open(BFV_CTX_FILE, "wb") as f:
-            f.write(ctx.serialize(save_secret_key=False))
+            f.write(ctx.serialize(save_secret_key=True))
     return ctx
 
 
@@ -69,6 +69,7 @@ def encrypt_vote(context, vec):
 
 
 def decrypt_vote(context, enc_bytes):
+    ctx = ts.context_from(secret_key_bytes)
     enc_vec = ts.bfv_vector_from(context, enc_bytes)
     return enc_vec.decrypt()
 
