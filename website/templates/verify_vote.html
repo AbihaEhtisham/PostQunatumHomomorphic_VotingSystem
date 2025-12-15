@@ -3,35 +3,112 @@
 <head>
     <meta charset="UTF-8">
     <title>Verify Vote</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body style="background:#222; color:#fff;">
-    <div class="container">
-        <h2>Verify a Vote</h2>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        /* Container styling */
+        .verify-container {
+            background: #ffffff;  /* white box */
+            padding: 40px;
+            border-radius: 14px;
+            width: 400px;
+            max-width: 90%;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            color: #111;
+        }
 
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            margin: 12px 0 20px 0;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            background: #008f4f; /* deep green */
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            background: #00b359; /* lighter green on hover */
+        }
+
+        .result p {
+            font-weight: bold;
+            margin-top: 15px;
+        }
+
+        .vote-list {
+            margin-top: 20px;
+            max-height: 150px;
+            overflow-y: auto;
+            text-align: left;
+            background: #f7f7f7;
+            padding: 10px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 14px;
+            color: #111;
+        }
+
+        body {
+            background: #000; /* black background for page */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Arial', sans-serif;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="verify-container">
+        <h2 class="text-2xl font-bold text-green-600 mb-4">Verify a Vote</h2>
+
+        <!-- Vote Verification Form -->
         <form method="POST">
-            <label for="receipt_hash">Enter Receipt Hash:</label>
-            <input type="text" name="receipt_hash" id="receipt_hash" required>
+            <input type="text" name="receipt_hash" id="receipt_hash" placeholder="Enter Receipt Hash" required>
             <button type="submit" class="btn">Check Vote</button>
         </form>
 
+        <!-- Display Verification Result -->
         {% if result is defined %}
             <div class="result">
                 {% if result %}
-                    <p style="color:#0f0;">Vote FOUND in database ✅</p>
+                    <p style="color:#008f4f;">Vote FOUND in database ✅</p>
                 {% else %}
                     <p style="color:#f00;">Vote NOT found ❌</p>
                 {% endif %}
             </div>
         {% endif %}
 
-        <ul>
-            {% for r in all_receipts %}
-                <li><code>{{ r }}</code></li>
-            {% endfor %}
-        </ul>
+        <!-- Display All Receipts -->
+        {% if all_receipts %}
+            <div class="vote-list">
+                <ul>
+                    {% for r in all_receipts %}
+                        <li><code>{{ r }}</code></li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
 
-        <a class="btn" href="{{ url_for('index') }}">Back</a>
+        <a class="btn mt-4" href="{{ url_for('index') }}">Back</a>
     </div>
+
 </body>
 </html>

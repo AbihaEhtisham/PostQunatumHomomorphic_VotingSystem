@@ -2,7 +2,7 @@ import bcrypt
 import json
 
 agents = {
-    "101": "SuperSecurePass1!",
+    "PS-9142": "G7x!92LpAq#3",
     "202": "UltraSecureKey2#",
     "303": "MegaSafePassword3$"
 }
