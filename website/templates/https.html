@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Secure Live Vote Count</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 50px;
+            background: #0e1a2b;
+            color: white;
+        }
+
+        #vote-count {
+            font-size: 48px;
+            margin-top: 20px;
+            color: #2ecc71;
+        }
+
+        #status {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #f39c12;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Live Votes Cast (Secure)</h1>
+    <div id="vote-count">Loading...</div>
+    <div id="status"></div>
+
+<script>
+/* ================================
+   DEMO SECRET KEY (DO NOT DO THIS
+   IN REAL PRODUCTION SYSTEMS)
+================================ */
+const SECRET_KEY = "super_secret_live_vote_key";
+
+/* ================================
+   Utility: Hex → ArrayBuffer
+================================ */
+function hexToBuffer(hex) {
+    const bytes = new Uint8Array(hex.length / 2);
+    for (let i = 0; i < bytes.length; i++) {
+        bytes[i] = parseInt(hex.substr(i * 2, 2), 16);
+    }
+    return bytes.buffer;
+}
+
+/* ================================
+   HMAC Verification Function
+================================ */
+async function verifyHMAC(payload, signature) {
+    const encoder = new TextEncoder();
+
+    // Deterministic JSON (sorted keys)
+    const orderedPayload = {};
+    Object.keys(payload).sort().forEach(k => {
+        orderedPayload[k] = payload[k];
+    });
+
+    const message = JSON.stringify(orderedPayload);
+
+    const key = await crypto.subtle.importKey(
+        "raw",
+        encoder.encode(SECRET_KEY),
+        { name: "HMAC", hash: "SHA-256" },
+        false,
+        ["verify"]
+    );
+
+    return await crypto.subtle.verify(
+        "HMAC",
+        key,
+        hexToBuffer(signature),
+        encoder.encode(message)
+    );
+}
+
+/* ================================
+   Fetch & Verify Votes (HTTPS)
+================================ */
+async function loadVotes() {
+    try {
+        const response = await fetch(
+            "https://127.0.0.1:5000/api/live_votes"
+        );
+
+        const data = await response.json();
+        const { signature, ...payload } = data;
+
+        const valid = await verifyHMAC(payload, signature);
+
+        if (!valid) {
+            document.getElementById("status").textContent =
+                "⚠ Data integrity check FAILED";
+            return;
+        }
+
+        // Optional: freshness check (10 seconds)
+        const now = Math.floor(Date.now() / 1000);
+        if (now - payload.timestamp > 10) {
+            document.getElementById("status").textContent =
+                "⚠ Stale response detected";
+            return;
+        }
+
+        document.getElementById("vote-count").textContent =
+            payload.total_votes_cast;
+
+        document.getElementById("status").textContent =
+            "✔ Verified via HTTPS + HMAC";
+
+    } catch (err) {
+        console.error(err);
+        document.getElementById("status").textContent =
+            "Error fetching secure vote count";
+    }
+}
+
+/* ================================
+   Poll every 5 seconds
+================================ */
+setInterval(loadVotes, 5000);
+loadVotes();
+</script>
+
+</body>
+</html>

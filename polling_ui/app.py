@@ -331,6 +331,7 @@ def vote_page():
     if not is_voting_open():
         return render_template('voting_closed.html')
 
+
     return render_template('vote.html')
 
 """

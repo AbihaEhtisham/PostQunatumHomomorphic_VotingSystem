@@ -2,7 +2,6 @@ from flask import Flask, render_template, jsonify, request
 import sqlite3
 import sys
 import os
-
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(os.path.join(BASE_DIR, "polling_ui"))  # add polling_ui folder
 
@@ -20,7 +19,7 @@ DB_PATH = os.path.join(BASE_DIR, "polling_ui", "voters.db")
 import json
 from datetime import datetime
 
-CONFIG_FILE = "config.json"  # path relative to app.py
+CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
 
 @app.route('/')
 def index():
@@ -47,26 +46,29 @@ def index():
 
 @app.route('/verify_vote', methods=['GET', 'POST'])
 def verify_vote():
-    result = None
-    all_receipts = []
-
-    # Connect to database
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-
-    # Fetch all receipt hashes for display
-    c.execute("SELECT receipt_hash FROM votes")
-    all_receipts = [row[0] for row in c.fetchall()]
-
     if request.method == 'POST':
         receipt_hash = request.form.get('receipt_hash', '').strip()
-        c.execute("SELECT 1 FROM votes WHERE receipt_hash = ?", (receipt_hash,))
+
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+
+        c.execute(
+            "SELECT 1 FROM votes WHERE receipt_hash = ?",
+            (receipt_hash,)
+        )
         row = c.fetchone()
+        conn.close()
+
         result = bool(row)  # True if found, False if not
 
-    conn.close()
-    return render_template('verify_vote.html', result=result, all_receipts=all_receipts)
+        return render_template(
+            'verify_vote.html',
+            result=result,
+            receipt_hash=receipt_hash
+        )
 
+    # GET request → no verification yet
+    return render_template('verify_vote.html')
 
 @app.route('/api/live_votes')
 def api_live_votes():

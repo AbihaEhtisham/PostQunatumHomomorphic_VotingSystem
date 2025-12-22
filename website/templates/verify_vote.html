@@ -3,112 +3,193 @@
 <head>
     <meta charset="UTF-8">
     <title>Verify Vote</title>
+
+    <!-- Tailwind CSS -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+    <!-- QR Code Library -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+
     <style>
-        /* Container styling */
+        body {
+            background: linear-gradient(135deg, #000000, #0a2f1c);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+        }
+
         .verify-container {
-            background: #ffffff;  /* white box */
+            background: #ffffff;
             padding: 40px;
-            border-radius: 14px;
-            width: 400px;
-            max-width: 90%;
+            border-radius: 16px;
+            width: 420px;
+            max-width: 95%;
             text-align: center;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-            color: #111;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.35);
         }
 
         input[type="text"] {
             width: 100%;
             padding: 12px;
-            margin: 12px 0 20px 0;
-            border-radius: 6px;
+            margin: 12px 0 20px;
+            border-radius: 8px;
             border: 1px solid #ccc;
             font-size: 16px;
         }
 
         .btn {
-            padding: 12px 20px;
-            background: #008f4f; /* deep green */
+            padding: 12px 22px;
+            background: #008f4f;
             color: white;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             font-size: 16px;
             font-weight: bold;
             cursor: pointer;
             transition: 0.3s ease;
-            text-decoration: none;
-            display: inline-block;
-            margin-top: 10px;
         }
 
         .btn:hover {
-            background: #00b359; /* lighter green on hover */
+            background: #00b359;
         }
 
-        .result p {
-            font-weight: bold;
-            margin-top: 15px;
-        }
-
-        .vote-list {
+        .verified-box {
+            background: #f0fff7;
+            border: 2px dashed #00b359;
+            padding: 20px;
+            border-radius: 12px;
             margin-top: 20px;
-            max-height: 150px;
-            overflow-y: auto;
-            text-align: left;
+        }
+
+        .discount-card {
+            background: #111;
+            color: #fff;
+            padding: 14px;
+            border-radius: 10px;
+            margin-top: 10px;
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+        }
+
+        .receipt-box {
             background: #f7f7f7;
             padding: 10px;
-            border-radius: 6px;
+            border-radius: 8px;
+            margin-top: 10px;
             font-family: monospace;
             font-size: 14px;
-            color: #111;
-        }
-
-        body {
-            background: #000; /* black background for page */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            font-family: 'Arial', sans-serif;
+            word-break: break-all;
         }
     </style>
 </head>
 
 <body>
 
-    <div class="verify-container">
-        <h2 class="text-2xl font-bold text-green-600 mb-4">Verify a Vote</h2>
+<div class="verify-container">
+    <h2 class="text-2xl font-bold text-green-600 mb-4">🗳 Verify Your Vote</h2>
 
-        <!-- Vote Verification Form -->
-        <form method="POST">
-            <input type="text" name="receipt_hash" id="receipt_hash" placeholder="Enter Receipt Hash" required>
-            <button type="submit" class="btn">Check Vote</button>
-        </form>
+    <!-- Verification Form -->
+    <form method="POST">
+        <input
+            type="text"
+            name="receipt_hash"
+            placeholder="Enter Receipt Hash"
+            required
+        >
+        <button type="submit" class="btn w-full">Check Vote</button>
+    </form>
 
-        <!-- Display Verification Result -->
-        {% if result is defined %}
-            <div class="result">
-                {% if result %}
-                    <p style="color:#008f4f;">Vote FOUND in database ✅</p>
-                {% else %}
-                    <p style="color:#f00;">Vote NOT found ❌</p>
-                {% endif %}
+    <!-- Result (only after POST) -->
+    {% if result is defined %}
+        {% if result %}
+            <div class="verified-box">
+                <h3 class="text-xl font-bold text-green-700">
+                    ✅ Voter Verified
+                </h3>
+
+                <p class="mt-2">
+                    🎉 Congratulations on successfully voting!
+                </p>
+
+                <p class="mt-3 text-sm text-gray-700">
+                    Receipt Hash:
+                </p>
+
+                <div class="receipt-box">
+                    {{ receipt_hash }}
+                </div>
+
+                <!-- QR Code -->
+                <div class="mt-4 flex justify-center">
+                    <div id="qrCode"></div>
+                </div>
+
+                <p class="text-xs text-gray-500 mt-2">
+                    
+                </p>
+
+                <h4 class="mt-4 font-bold text-green-700">
+                    🎁 Exclusive Voter Discounts
+                </h4>
+
+                <div id="discounts"></div>
             </div>
+        {% else %}
+            <p class="mt-4 text-red-600 font-bold">
+                ❌ Receipt not found. Please check and try again.
+            </p>
         {% endif %}
+    {% endif %}
 
-        <!-- Display All Receipts -->
-        {% if all_receipts %}
-            <div class="vote-list">
-                <ul>
-                    {% for r in all_receipts %}
-                        <li><code>{{ r }}</code></li>
-                    {% endfor %}
-                </ul>
-            </div>
-        {% endif %}
+    <a class="btn mt-6 inline-block" href="{{ url_for('index') }}">⬅ Back</a>
+</div>
 
-        <a class="btn mt-4" href="{{ url_for('index') }}">Back</a>
-    </div>
+<script>
+    // Discount brands
+    const brands = [
+        "KFC 🍗",
+        "Cheezious 🧀",
+        "OD Donuts 🍩",
+        "Sapphire 👗",
+        "Texas Barbeque 🔥"
+    ];
+
+    function randomDiscount() {
+        return Math.floor(Math.random() * 30) + 10; // 10–40%
+    }
+
+    // Render discounts only if verified
+    const discountContainer = document.getElementById("discounts");
+    if (discountContainer) {
+        brands.forEach(brand => {
+            const div = document.createElement("div");
+            div.className = "discount-card";
+            div.innerHTML = `
+                <span>${brand}</span>
+                <span>${randomDiscount()}% OFF</span>
+            `;
+            discountContainer.appendChild(div);
+        });
+    }
+
+    // Generate QR code from receipt hash
+    const receiptHash = "{{ receipt_hash | default('') }}";
+    const qrContainer = document.getElementById("qrCode");
+
+    if (receiptHash && qrContainer) {
+        new QRCode(qrContainer, {
+            text: receiptHash,
+            width: 140,
+            height: 140,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+    }
+</script>
 
 </body>
 </html>
