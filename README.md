@@ -141,9 +141,9 @@ python app.py
 * Login Page
 ![Login Page](login.png)
 * Voter Verification
-![Voter Verification](screenshots/voter_verification.png)
+![Voter Verification](voter_verification.png)
 * Vote Receipt
-![Vote Receipt](screenshots/vote_receipt.png)
+![Vote Receipt](vote_receipt.png)
 ---
 
 # ⭐ Acknowledgements
