@@ -139,7 +139,7 @@ python app.py
 # 📸 Screenshots
 
 * Login Page
-![Login Page](screenshots/login.png)
+![Login Page](login.png)
 * Voter Verification
 ![Voter Verification](screenshots/voter_verification.png)
 * Vote Receipt
